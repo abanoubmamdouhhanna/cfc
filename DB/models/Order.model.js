@@ -2,9 +2,11 @@ import mongoose, { model, Schema, Types } from "mongoose";
 
 const orderSchema = new Schema(
   {
+    customId:String,
+    locationId: { type: Types.ObjectId, ref: "Location", required: true },
     userId: { type: Types.ObjectId, ref: "User", required: true },
-    address: [String],
-    phone: [String],
+    address: { type: String, required: true },
+    phone: [{ type: String, required: true }],
     meals: [
       {
         mealId: { type: Types.ObjectId, ref: "Meal", required: true },
@@ -17,9 +19,7 @@ const orderSchema = new Schema(
       },
     ],
     couponId: { type: Types.ObjectId, ref: "Coupon" },
-    note: String,
     reason: String,
-    // invoice:String,
     finalPrice: { type: Number, default: 1 },
     status: {
       type: String,
@@ -27,20 +27,19 @@ const orderSchema = new Schema(
       enum: [
         "Pending",
         "Processing",
+        "Prepared",
+        "Completed",
         "Cancelled",
         "Rejected",
-        "Completed",
       ],
     },
     paymentType: {
       type: String,
-      default: "COD",
-      enum: ["COD", "Card", "PayPal", "E-wallets"],
+      default: "Card",
+      enum: [ "Card", "PayPal", "E-wallets"],
     },
-    invoice:{
-      url:String,
-      id:String
-    },
+    invoice:String,
+    invoicePublicId:String,
 
     updatedBy: { type: Types.ObjectId, ref: "User" },
     isDeleted: { type: Boolean, default: false },
