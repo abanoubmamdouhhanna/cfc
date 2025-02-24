@@ -12,7 +12,9 @@ import jobRouter from "./modules/job/job.router.js";
 import newsLetterRouter from "./modules/newsletter/newsletter.router.js";
 import franchiseRouter from "./modules/franchise/franchise.router.js";
 import teamRouter from "./modules/team/team.router.js";
-import reviewRouter from "./modules/reviews/reviews.router.js"
+import reviewRouter from "./modules/reviews/reviews.router.js";
+import orderRouter from "./modules/order/order.router.js";
+import cartRouter from "./modules/cart/cart.router.js";
 
 const initApp = (app, express) => {
   app.use(express.json({}));
@@ -29,7 +31,8 @@ const initApp = (app, express) => {
   app.use("/franchise", franchiseRouter);
   app.use("/team", teamRouter);
   app.use("/review", reviewRouter);
-
+  app.use("/order", orderRouter);
+  app.use("/cart", cartRouter);
 
   app.all("*", (req, res, next) => {
     return next(new Error("error 404 in-valid routing", { cause: 404 }));

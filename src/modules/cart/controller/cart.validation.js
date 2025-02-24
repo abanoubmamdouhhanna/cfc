@@ -5,7 +5,7 @@ export const headersSchema = generalFeilds.headers;
 
 export const addToCartSchema=joi.object(
     {
-        productId:generalFeilds.id,
+        mealId:generalFeilds.id,
         quantity:generalFeilds.quantity.required()
     }
 ).required()

@@ -81,6 +81,13 @@ export const generalFeilds = {
       "number.min": " must be greater than or equal to 1",
       "number.positive": "must be positive number",
     }),
+    quantity: joi.number().integer().positive().min(1).messages({
+      "any.required": "Quantity is required",
+      "number.base": "Quantity must be number",
+      "number.min": " must be greater than or equal to 1",
+      "number.positive": "must be positive number",
+      "number.integer": "must be an integer number",
+    }),
   otp: joi
     .string()
     .alphanum()

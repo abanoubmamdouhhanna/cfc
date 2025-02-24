@@ -20,6 +20,7 @@ export const allowedTypesMap = (() => {
     locationPhoto: imageTypes,
     processImage: imageTypes,
     memberImage: imageTypes,
+    couponImage:imageTypes,
     resume: documentTypes,
   };
 })();

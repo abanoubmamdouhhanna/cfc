@@ -1,5 +1,5 @@
 import cartModel from "../../../../DB/models/Cart.model.js";
-import productModel from "../../../../DB/models/Product.model.js";
+import mealModel from "../../../../DB/models/meal.model.js";
 import { asyncHandler } from "../../../utils/errorHandling.js";
 
 //get cart
@@ -16,21 +16,23 @@ export const getCart=asyncHandler(async(req,res,next)=>
 
 }
 )
+//====================================================================================================================//
 //add to cart
+
 export const addToCart = asyncHandler(async (req, res, next) => {
-  const { productId, quantity } = req.body;
-  const product = await productModel.findById(productId);
-  if (!product) {
-    return next(new Error("In-valid product Id", { cause: 400 }));
+  const { mealId, quantity } = req.body;
+  const meal = await mealModel.findById(mealId);
+  if (!meal) {
+    return next(new Error("In-valid meal Id", { cause: 400 }));
   }
 
-  if (quantity > product.stock || product.isDeleted) {
-    await productModel.updateOne(
-      { _id: productId },
+  if (meal.status == "not avialable" || meal.isDeleted ) {
+    await mealModel.updateOne(
+      { _id: mealId },
       { $addToSet: { wishUser: req.user._id } }
     );
     return next(
-      new Error("You can't buy this quantity or at least right now", {
+      new Error("You can't buy this meal at least right now", {
         cause: 400,
       })
     );
@@ -41,7 +43,7 @@ export const addToCart = asyncHandler(async (req, res, next) => {
   if (!cart) {
     const newCart = await cartModel.create({
       createdBy: req.user.id,
-      products: [{ productId, quantity }],
+      meals: [{ mealId, quantity }],
     });
     return res
       .status(201)
@@ -52,18 +54,18 @@ export const addToCart = asyncHandler(async (req, res, next) => {
       });
   }
   //update cart items
-  let matchProduct = false;
-  for (let index = 0; index < cart.products.length; index++) {
-    if (cart.products[index].productId.toString() == productId) {
-      cart.products[index].quantity = quantity;
-      matchProduct = true;
+  let matchmeal = false;
+  for (let index = 0; index < cart.meals.length; index++) {
+    if (cart.meals[index].mealId.toString() == mealId) {
+      cart.meals[index].quantity = quantity;
+      matchmeal = true;
       break;
     }
   }
 
   //push to cart
-  if (!matchProduct) {
-    cart.products.push({ productId, quantity });
+  if (!matchmeal) {
+    cart.meals.push({ mealId, quantity });
   }
   await cart.save();
   return res
@@ -77,9 +79,10 @@ export const addToCart = asyncHandler(async (req, res, next) => {
 
 //====================================================================================================================//
 //clear cart
+
 export async function clearAllCartItems(createdBy)
 {
-  const cart = await cartModel.updateOne({createdBy},{products:[]})
+  const cart = await cartModel.updateOne({createdBy},{meals:[]})
   return cart
 
 }
@@ -97,13 +100,13 @@ export const clearCart=asyncHandler(async(req,res,next)=>
 
 //====================================================================================================================//
 //clear Cart Item
-export async function clearSelectedItems(productIds, createdBy) {
+export async function clearSelectedItems(mealIds, createdBy) {
   const cart = await cartModel.updateOne(
     { createdBy },
     {
       $pull: {
-        products: {
-          productId: { $in: productIds },
+        meals: {
+          mealId: { $in: mealIds },
         },
       },
     }
@@ -113,8 +116,8 @@ export async function clearSelectedItems(productIds, createdBy) {
 
 export const clearCartItem=asyncHandler(async(req,res,next)=>
 {
-  const {productIds}=req.body
-  await clearSelectedItems(productIds,req.user._id)
+  const {mealIds}=req.body
+  await clearSelectedItems(mealIds,req.user._id)
   return res
     .status(200)
     .json({
