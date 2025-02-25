@@ -49,6 +49,7 @@ export const getCoupons = asyncHandler(async (req, res, next) => {
   return res.status(200).json({
     status: "success",
     message: "Coupons retrieved successfully",
+    count:coupons.length,
     result: coupons,
   });
 });
@@ -64,11 +65,24 @@ export const updateCoupon = asyncHandler(async (req, res, next) => {
     return next(new Error(`Invalid coupon ID: ${couponId}`, { cause: 404 }));
   }
 
+
   // Ensure at least one valid update field is provided
   if (!(req.body.name || req.body.amount || req.body.expire || req.file)) {
     return next(new Error("You must provide at least one field to update (name, amount, expire, or image).", { cause: 400 }));
   }
 
+  const object = { ...req.body };
+
+  for (let key in object) {
+    if (coupon[key] == object[key]) {
+      return next(
+        new Error(
+          `I'm sorry, but we cannot update your ${key} with your old one. Please make sure that ${key} you have entered correctly and try again.`,
+          { cause: 400 }
+        )
+      );
+    }
+  }
   //Update coupon name (if changed)
   if (req.body.name) {
     req.body.name = req.body.name.toUpperCase();

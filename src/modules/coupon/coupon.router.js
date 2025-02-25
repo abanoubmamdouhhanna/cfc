@@ -2,7 +2,7 @@ import { Router } from "express";
 import { isValid } from "../../middlewares/validation.middleware.js";
 import { allowedTypesMap, fileUpload } from "../../utils/multerCloudinary.js";
 import * as couponController from "./controller/coupon.controller.js";
-import { auth, roles } from "../../middlewares/auth.middleware.js";
+import { auth } from "../../middlewares/auth.middleware.js";
 import {
   createCouponSchema,
   deleteCouponSchema,

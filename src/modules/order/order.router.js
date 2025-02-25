@@ -15,7 +15,7 @@ const router = Router();
 router.post(
   "/createOrder/:locationId",
   isValid(headersSchema, true),
-  auth(["user"]),
+  auth(["user","superAdmin"]),
   isValid(createOrderSchema),
   orderController.createOrder
 );
@@ -38,4 +38,17 @@ router.patch(
   orderController.deliveredOrder
 );
 
+//get orders with status Processing
+router.get("/getOrder",
+  isValid(headersSchema, true),
+  auth(["admin","superAdmin"]),
+  orderController.getOrder
+)
+
+//get all orders 
+router.get("/getAllOrders",
+  isValid(headersSchema, true),
+  auth(["admin","superAdmin"]),
+  orderController.getAllOrders
+)
 export default router;

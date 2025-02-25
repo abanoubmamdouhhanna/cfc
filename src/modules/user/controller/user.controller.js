@@ -8,15 +8,13 @@ import {
   generateToken,
   verifyToken,
 } from "../../../utils/generateAndVerifyToken.js";
+
 //user profile
 export const userProfile = asyncHandler(async (req, res, next) => {
-  const user = await userModel.findOne({ _id: req.user._id }, "firstName lastName email phone wishlist").populate(
-    {
-      path:"wishListContent",
-      select:"title image flavor price discount finalPrice size wishUser status",
-    }
-  )
-    return res.status(200).json({status:"Success" ,message: "Done", user });
+  const user = await userModel.findOne({ _id: req.user._id }, "firstName lastName email phone wishlist")
+    .populate("wishListContent", "title image flavor price discount finalPrice size wishUser status")
+    .populate("walletBalance", "balance -userId -_id"); 
+  return res.status(200).json({ status: "Success", message: "Done", user });
 });
 
 //====================================================================================================================//

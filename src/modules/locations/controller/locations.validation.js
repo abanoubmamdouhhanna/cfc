@@ -11,6 +11,7 @@ export const adddLocationSchema = joi
     hours: joi.string().required(),
     locationURL: joi.string().required(),
     phone: generalFeilds.USAphone,
+    taxRate: joi.number().min(0).max(100).default(7),
   })
   .required();
 
@@ -23,6 +24,7 @@ export const updateLocationSchema = joi
     hours: joi.string(),
     locationURL: joi.string(),
     phone: generalFeilds.USAphone,
+    taxRate: joi.number().min(0).max(100).default(7),
   })
   .required();
 

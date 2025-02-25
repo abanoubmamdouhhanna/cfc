@@ -9,7 +9,9 @@ export const createOrderSchema = joi
     couponId:generalFeilds.optionalId,
     couponName: generalFeilds.name.uppercase(),
     address: joi.string(),
-    phone: joi.array().items(generalFeilds.phone),
+    city: joi.string(),
+    state: joi.string(),
+    phone:generalFeilds.USAphone.required(),
     paymentType: joi.string(),
     meals: joi.array().required(),
   })

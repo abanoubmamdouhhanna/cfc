@@ -68,6 +68,12 @@ userSchema.virtual("wishListContent" ,
     localField:'wishlist',
     foreignField:'_id'
   })
-
+  userSchema.virtual("walletBalance" ,
+    {
+      ref:"Wallet",
+      localField:'_id',
+      foreignField:'userId'
+    })
+  
 const userModel = mongoose.models.User || model("User", userSchema);
 export default userModel;

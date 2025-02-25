@@ -6,7 +6,7 @@ import cloudinary from "../../../utils/cloudinary.js";
 
 //add career
 export const addLocation = asyncHandler(async (req, res, next) => {
-  const { title, address, phone, hours, locationURL } = req.body;
+  const { title, address, phone, hours, locationURL, taxRate } = req.body;
 
   const customId = nanoid();
   const locationPhoto = await uploadToCloudinary(
@@ -18,6 +18,7 @@ export const addLocation = asyncHandler(async (req, res, next) => {
   const locationPhotoPublicId = `${process.env.APP_NAME}/Location/${customId}/${customId}locationPhoto`;
   const location = await locationModel.create({
     title,
+    taxRate,
     address,
     phone,
     hours,
@@ -46,7 +47,7 @@ export const getLoacation = asyncHandler(async (req, res, next) => {
 //====================================================================================================================//
 //update location
 export const updateLocation = asyncHandler(async (req, res, next) => {
-  const { title, address, phone, hours, locationURL } = req.body;
+  const { title, address, phone, hours, locationURL, taxRate } = req.body;
   const { locationId } = req.params;
 
   // Check if the location exists
@@ -56,12 +57,14 @@ export const updateLocation = asyncHandler(async (req, res, next) => {
   }
 
   // Ensure there is at least one field to update
-  if (!(title || address || phone || hours || locationURL || req.file)) {
+  if (
+    !(title || address || phone || hours || locationURL || taxRate || req.file)
+  ) {
     return next(new Error("No data provided to update", { cause: 400 }));
   }
 
   // Compare provided fields with existing values
-  const fieldsToUpdate = { title, address, phone, hours, locationURL };
+  const fieldsToUpdate = { title, address, phone, hours, locationURL, taxRate };
   for (let key in fieldsToUpdate) {
     if (fieldsToUpdate[key] && fieldsToUpdate[key] === checkLocation[key]) {
       return next(

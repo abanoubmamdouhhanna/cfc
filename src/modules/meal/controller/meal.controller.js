@@ -43,7 +43,7 @@ export const mealList = asyncHandler(async (req, res, next) => {
 //====================================================================================================================//
 //create meal
 export const addMeal = asyncHandler(async (req, res, next) => {
-  const { title, price, discount, flavor, size } = req.body;
+  const { title,description, price, discount, flavor, size } = req.body;
   const { categoryId, subcategoryId } = req.params;
   const subCat = await subcategoryModel.findOne({
     _id: subcategoryId,
@@ -71,6 +71,7 @@ export const addMeal = asyncHandler(async (req, res, next) => {
   const mainMealImagePublicId = `${process.env.APP_NAME}/Meal/${customId}/${customId}mainMealImage`;
   const mealData = {
     title,
+    description,
     price,
     discount,
     customId,
