@@ -1,7 +1,7 @@
 import walletModel from "../../DB/models/Wallet.model.js";
 
 export async function rewardCustomer(userId, orderId, amountSpent) {
-  const rewardAmount = amountSpent * 0.01; // 1 cent per $1 spent
+  const rewardAmount = parseFloat((amountSpent * 0.01).toFixed(2)) // 1 cent per $1 spent
 
   let wallet = await walletModel.findOne({ userId });
 
@@ -10,7 +10,7 @@ export async function rewardCustomer(userId, orderId, amountSpent) {
   }
 
   // Update wallet balance and add a transaction
-  wallet.balance += rewardAmount;
+  wallet.balance = parseFloat((wallet.balance + rewardAmount).toFixed(2));
   wallet.transactions.push({
     type: "reward",
     amount: rewardAmount,
@@ -21,21 +21,22 @@ export async function rewardCustomer(userId, orderId, amountSpent) {
 }
 
 export async function payWithEwallet(userId, orderTotal) {
-    const wallet = await walletModel.findOne({ userId });
-  
-    if (!wallet || wallet.balance === 0) {
-      throw new Error("Insufficient E-Wallet balance");
-    }
-  
-    const amountToDeduct = Math.min(wallet.balance, orderTotal); // Use max available balance
-    wallet.balance -= amountToDeduct;
-  
-    wallet.transactions.push({
-      type: "spend",
-      amount: amountToDeduct,
-    });
-  
-    await wallet.save();
-    return amountToDeduct;
+  const wallet = await walletModel.findOne({ userId });
+
+  // Check if wallet exists and has sufficient balance
+  if (!wallet || wallet.balance < orderTotal) {
+    throw new Error("Insufficient E-Wallet balance to place the order.",{cause:400});
   }
-  
+
+  // Deduct the exact order amount
+  wallet.balance -= orderTotal;
+
+  // Add transaction record
+  wallet.transactions.push({
+    type: "spend",
+    amount: orderTotal,
+  });
+
+  await wallet.save();
+  return orderTotal;
+}

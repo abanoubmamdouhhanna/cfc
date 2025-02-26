@@ -1,6 +1,5 @@
 import userModel from "../../../../DB/models/User.model.js";
 import moment from "moment/moment.js";
-import sendEmail from "../../../utils/Emails/sendEmail.js";
 import { accountRecoveryEmail } from "../../../utils/Emails/accountRecoveryEmail.js";
 import { asyncHandler } from "../../../utils/errorHandling.js";
 import { compare, Hash } from "../../../utils/Hash&Compare.js";
@@ -11,17 +10,21 @@ import {
 
 //user profile
 export const userProfile = asyncHandler(async (req, res, next) => {
-  const user = await userModel.findOne({ _id: req.user._id }, "firstName lastName email phone wishlist")
-    .populate("wishListContent", "title image flavor price discount finalPrice size wishUser status")
-    .populate("walletBalance", "balance -userId -_id"); 
+  const user = await userModel
+    .findOne({ _id: req.user._id }, "firstName lastName email phone wishlist")
+    .populate(
+      "wishListContent",
+      "title image flavor price discount finalPrice size wishUser status"
+    )
+    .populate("walletBalance", "balance -userId -_id");
   return res.status(200).json({ status: "Success", message: "Done", user });
 });
 
 //====================================================================================================================//
 //update user
 export const updateUser = asyncHandler(async (req, res, next) => {
-  const {firstName , lastName, phone,email} = req.body;
-  if (!(firstName||lastName|| phone || email)) {
+  const { firstName, lastName, phone, email } = req.body;
+  if (!(firstName || lastName || phone || email)) {
     return next(new Error("We need information to update", { cause: 400 }));
   }
 
@@ -42,7 +45,7 @@ export const updateUser = asyncHandler(async (req, res, next) => {
 
   if (email) {
     const existingUser = await userModel.findOne({
-     email
+      email,
     });
 
     if (existingUser) {
@@ -95,11 +98,9 @@ export const changePassword = asyncHandler(async (req, res, next) => {
     );
   }
   const hashPassword = Hash({ plainText: newPassword });
-  const user = await userModel.findByIdAndUpdate(
-    req.user._id,
-    { password: hashPassword },
-    { new: true }
-  ).select("userName email updatedAt");
+  const user = await userModel
+    .findByIdAndUpdate(req.user._id, { password: hashPassword }, { new: true })
+    .select("userName email updatedAt");
   return res.status(200).json({
     status: "success",
     message: "Password updated successfully",
@@ -110,11 +111,13 @@ export const changePassword = asyncHandler(async (req, res, next) => {
 //====================================================================================================================//
 //deleteUser
 export const deleteUser = asyncHandler(async (req, res, next) => {
-  const user = await userModel.findByIdAndUpdate(
-    req.user._id,
-    { isDeleted: true, status: "not Active" },
-    { new: true }
-  ).select("email isDeleted permanentlyDeleted");
+  const user = await userModel
+    .findByIdAndUpdate(
+      req.user._id,
+      { isDeleted: true, status: "not Active" },
+      { new: true }
+    )
+    .select("email isDeleted permanentlyDeleted");
   user.permanentlyDeleted = moment().add(1, "month").calendar();
   await user.save();
   const reactiveToken = generateToken({
@@ -125,11 +128,11 @@ export const deleteUser = asyncHandler(async (req, res, next) => {
 
   const link = `${req.protocol}://${req.headers.host}/user/accountRecovery/${reactiveToken}`;
   const html = accountRecoveryEmail(link);
-  if (
-    !(await sendEmail({ to: user.email, subject: "reactivate account", html }))
-  ) {
-    return next(new Error("Something went wrong", { cause: 400 }));
-  }
+
+  emitter.emit("deleteUser",{
+    email:user.email,html
+  })
+
   return res.status(200).json({
     status: "success",
     message:
@@ -159,4 +162,3 @@ export const accountRecovery = asyncHandler(async (req, res, next) => {
     result: user,
   });
 });
-

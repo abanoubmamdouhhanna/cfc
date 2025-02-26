@@ -14,7 +14,7 @@ const router = Router();
 router.get(
   "/userProfile",
   isValid(headersSchema, true),
-  auth(["superAdmin","admin","user"]),
+  auth(["superAdmin", "admin", "user"]),
   userController.userProfile
 );
 
@@ -22,7 +22,7 @@ router.get(
 router.post(
   "/updateUser",
   isValid(headersSchema, true),
-  auth(["superAdmin","admin","user"]),
+  auth(["superAdmin", "admin", "user"]),
   isValid(updateUserSchema),
   userController.updateUser
 );
@@ -31,7 +31,7 @@ router.post(
 router.patch(
   "/changePassword",
   isValid(headersSchema, true),
-  auth(["superAdmin","admin","user"]),
+  auth(["superAdmin", "admin", "user"]),
   isValid(changePasswordSchema),
   userController.changePassword
 );
@@ -40,7 +40,7 @@ router.patch(
 router.patch(
   "/deleteUser",
   isValid(headersSchema, true),
-  auth(["superAdmin","admin","user"]),
+  auth(["superAdmin", "admin", "user"]),
   userController.deleteUser
 );
 

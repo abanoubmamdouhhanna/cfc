@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import express from "express";
 import cors from 'cors'
 import initApp from "./src/app.router.js";
+import "./src/utils/eventEmitter.js"
+import { startOrderCleanupJob } from "./src/utils/orderCleanup.js";
 
 // Set directory dirname
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -13,7 +15,7 @@ const app = express();
 const port = process.env.PORT;
 app.use(cors())
 
-
+startOrderCleanupJob()
 initApp(app, express);
 
 app.listen(port, () => {

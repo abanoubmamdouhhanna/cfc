@@ -22,6 +22,7 @@ const orderSchema = new Schema(
     ],
     couponId: { type: Types.ObjectId, ref: "Coupon" },
     reason: String,
+    discount: { type: Number, default: 0 },
     finalPrice: { type: Number, default: 1 },
     tax: { type: Number },
     totalPrice: { type: Number, default: 1 }, // price after tax
@@ -40,10 +41,11 @@ const orderSchema = new Schema(
     paymentType: {
       type: String,
       default: "Card",
-      enum: ["Card","Wallet"],
+      enum: ["Card","Paypal","Wallet"],
     },
     invoice: String,
     invoicePublicId: String,
+    stripeSessionId:String,
 
     updatedBy: { type: Types.ObjectId, ref: "User" },
     isDeleted: { type: Boolean, default: false },

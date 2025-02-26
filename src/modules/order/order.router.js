@@ -9,22 +9,23 @@ import {
   headersSchema,
 } from "./controller/order.validation.js";
 
+
 const router = Router();
 
 //create Order
 router.post(
   "/createOrder/:locationId",
   isValid(headersSchema, true),
-  auth(["user","superAdmin"]),
+  auth(["user", "superAdmin"]),
   isValid(createOrderSchema),
   orderController.createOrder
 );
 
 //cancel order
 router.patch(
-  "/CancelOrder/:orderId",
+  "/cancelOrder/:orderId",
   isValid(headersSchema, true),
-  auth(["user","admin","superAdmin"]),
+  auth(["user", "admin", "superAdmin"]),
   isValid(cancelOrderSchema),
   orderController.CancelOrder
 );
@@ -33,22 +34,57 @@ router.patch(
 router.patch(
   "/:orderId/delivered",
   isValid(headersSchema, true),
-  auth(["admin","superAdmin"]),
+  auth(["admin", "superAdmin"]),
   isValid(deliveredOrderSchema),
   orderController.deliveredOrder
 );
 
 //get orders with status Processing
-router.get("/getOrder",
+router.get(
+  "/getOrder",
   isValid(headersSchema, true),
-  auth(["admin","superAdmin"]),
+  auth(["admin", "superAdmin"]),
   orderController.getOrder
-)
+);
 
-//get all orders 
-router.get("/getAllOrders",
+//get all orders
+router.get(
+  "/getAllOrders",
   isValid(headersSchema, true),
-  auth(["admin","superAdmin"]),
+  auth(["admin", "superAdmin"]),
   orderController.getAllOrders
-)
+);
+
+//PayPal Payment Success (Query: orderId, token, PayerID)
+router.get(
+  "/paypalPayment/success",
+  isValid(headersSchema, true),
+  auth(["user", "superAdmin"]),
+  orderController.paypalSuccess
+);
+
+//PayPal Payment Cancel (Query: orderId)
+router.get(
+  "/paypalPayment/cancel",
+  isValid(headersSchema, true),
+  auth(["user", "superAdmin"]),
+  orderController.paypalCancel
+);
+
+//Strip Payment Success
+router.get(
+  "/stripePayment/success",
+  isValid(headersSchema, true),
+  auth(["user", "superAdmin"]),
+  orderController.stripeSuccess
+);
+
+//Strip Payment Cancel 
+router.get(
+  "/stripePayment/cancel",
+  isValid(headersSchema, true),
+  auth(["user", "superAdmin"]),
+  orderController.stripeCancel
+);
+
 export default router;

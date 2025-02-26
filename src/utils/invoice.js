@@ -137,7 +137,7 @@ function generateInvoiceTable(doc, invoice) {
   y += 30; // Move down for summary
   doc.font("Helvetica-Bold");
   generateTableRow(doc, y, "", "", "Subtotal", "", formatCurrency(invoice.subtotal));
-  generateTableRow(doc, y + 20, "", "", "Discount", "", `${invoice.discount}%`);
+  generateTableRow(doc, y + 20, "", "", "Discount", "", `${invoice.discount}`);
   generateTableRow(doc, y + 40, "", "", "Final Price", "", formatCurrency(invoice.finalPrice));
   generateTableRow(doc, y + 60, "", "", `Tax (${invoice.taxRate}%)`, "", formatCurrency(invoice.tax));
   generateTableRow(doc, y + 80, "", "", "Total Price", "", formatCurrency(invoice.totalPrice));

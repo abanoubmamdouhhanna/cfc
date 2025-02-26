@@ -1,7 +1,6 @@
 import moment from "moment/moment.js";
 import crypto from "crypto";
 
-import sendEmail from "../../../utils/Emails/sendEmail.js";
 import { otpEmail } from "../../../utils/Emails/optEmail.js";
 import { compare, Hash } from "../../../utils/Hash&Compare.js";
 import { asyncHandler } from "../../../utils/errorHandling.js";
@@ -12,6 +11,7 @@ import {
 } from "../../../utils/generateAndVerifyToken.js";
 import userModel from "../../../../DB/models/User.model.js";
 import { activationMail } from "../../../utils/Emails/activationMail.js";
+import { emitter } from "../../../utils/eventEmitter.js";
 
 // registeration
 export const signUp = asyncHandler(async (req, res, next) => {
@@ -42,14 +42,11 @@ export const signUp = asyncHandler(async (req, res, next) => {
   const protocol = req.protocol;
   const host = req.headers.host;
   const html = activationMail(activationCode, protocol, host);
+
+  emitter.emit("register",{
+    email,html
+  })
   
-  sendEmail ({
-    to: email,
-    subject: "Confirmation mail",
-    html,
-  }).catch((err) => {
-    console.error("Failed to send email:", err);
-  });
   // Respond immediately without waiting for the email to be sent
   return res.status(201).json({
     message:"User added successfully. Please check your email for activation.",
@@ -88,14 +85,10 @@ export const addAdmin = asyncHandler(async (req, res, next) => {
    const protocol = req.protocol;
    const host = req.headers.host;
    const html = activationMail(activationCode, protocol, host);
- 
-   sendEmail ({
-     to: email,
-     subject: "Confirmation mail",
-     html,
-   }).catch((err) => {
-     console.error("Failed to send email:", err);
-   });
+
+   emitter.emit("register",{
+    email,html
+  })
    // Respond immediately without waiting for the email to be sent
    return res.status(201).json({
      message:"Admin added successfully. Please check email you added for activation.",
@@ -217,17 +210,14 @@ export const reActivateAcc = asyncHandler(async (req, res, next) => {
     const host = req.headers.host;
 
     const html = activationMail(user.activationCode, protocol, host);
-    const info = await sendEmail({
-      to: email,
-      subject: "New Confirmation mail",
-      html,
-    });
-    if (!info) {
-      return next(new Error("Rejected Email", { cause: 400 }));
-    }
+
+    emitter.emit("reActiveAccount",{
+      email,html
+    })
     return res.status(200).json({
       message: "Check your email we already sent an activation mail ",
     });
+    
   }
   return next(new Error("Your account is already confirmed", { cause: 400 }));
 });
@@ -251,14 +241,11 @@ export const forgetPasswordOTP = asyncHandler(async (req, res, next) => {
   const redirectLink = `${req.protocol}://${req.headers.host}/auth/resetPasswordOTP/${email}`;
 
   const html = otpEmail(OTP, redirectLink);
-  const info = await sendEmail({
-    to: email,
-    subject: "Forget Password otp",
-    html,
-  });
-  if (!info) {
-    return next(new Error("Rejected Email", { cause: 400 }));
-  }
+
+  emitter.emit("forgetPassword",{
+    email,html
+  })
+  
   return res.status(200).json({
     status: "success",
     message: "OTP code have been sent to your account",
