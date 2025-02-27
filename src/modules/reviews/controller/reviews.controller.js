@@ -74,7 +74,10 @@ export const deleteReview = asyncHandler(async (req, res, next) => {
   if (!review) {
     return next(new Error("In-valid review Id", { cause: 400 }));
   }
- await reviewModel.findOneAndDelete({_id:reviewId,createdBy:req.user._id});
+  await reviewModel.findOneAndDelete({
+    _id: reviewId,
+    createdBy: req.user._id,
+  });
 
   return res.status(200).json({
     status: "success",
@@ -91,8 +94,8 @@ export const deleteReviewByAdmin = asyncHandler(async (req, res, next) => {
   if (!review) {
     return next(new Error("In-valid review Id", { cause: 400 }));
   }
- await reviewModel.findByIdAndDelete(reviewId);
- 
+  await reviewModel.findByIdAndDelete(reviewId);
+
   return res.status(200).json({
     status: "success",
     message: "Review on meal deleted successfully",
