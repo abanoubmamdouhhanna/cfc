@@ -42,15 +42,15 @@ router.patch(
 //get all orders
 router.get(
   "/getAllOrders",
-  // isValid(headersSchema, true),
-  // auth(["superAdmin"]),
+  isValid(headersSchema, true),
+  auth(["superAdmin"]),
   orderController.getAllOrders
 );
 //get order 
 router.get(
   "/getOrder/:orderId",
-  // isValid(headersSchema, true),
-  // auth(["superAdmin"]),
+  isValid(headersSchema, true),
+  auth(["superAdmin","user"]),
   orderController.getOrder
 );
 

@@ -8,7 +8,7 @@ const router = Router();
 
 //create review
 router.post(
-  "/createReview",
+  "/createReview/:mealId",
   isValid(headersSchema, true),
   auth(["user"]),
     isValid(createReviewSchema),
@@ -24,7 +24,7 @@ router.patch(
   reviewController.updateReview
 );
 
-//delete review
+//delete review by author
 router.delete(
   "/deleteReview/:reviewId",
   isValid(headersSchema, true),
@@ -32,11 +32,16 @@ router.delete(
   isValid(deleteReviewSchema),
   reviewController.deleteReview
 );
-
+//delete review by superAdmin
+router.delete(
+  "/deleteReviewByAdmin/:reviewId",
+  isValid(headersSchema, true),
+  auth(["superAdmin"]),
+  isValid(deleteReviewSchema),
+  reviewController.deleteReviewByAdmin
+);
 //get all reviews
 router.get("/getReviews",
-  isValid(headersSchema,true),
-  auth(["superAdmin"]),
   reviewController.getReviews
 )
 
