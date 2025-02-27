@@ -46,6 +46,13 @@ router.get(
   // auth(["superAdmin"]),
   orderController.getAllOrders
 );
+//get order 
+router.get(
+  "/getOrder/:orderId",
+  // isValid(headersSchema, true),
+  // auth(["superAdmin"]),
+  orderController.getOrder
+);
 
 //get location logged in orders
 router.get(

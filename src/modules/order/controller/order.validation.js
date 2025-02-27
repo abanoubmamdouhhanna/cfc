@@ -5,17 +5,29 @@ export const headersSchema = generalFeilds.headers;
 
 export const createOrderSchema = joi
   .object({
-    locationId:generalFeilds.id,
-    couponId:generalFeilds.optionalId,
+    locationId: generalFeilds.id,
+    couponId: generalFeilds.optionalId,
     couponName: generalFeilds.name.uppercase(),
     address: joi.string(),
     city: joi.string(),
     state: joi.string(),
-    phone:generalFeilds.USAphone.required(),
+    orderTime: generalFeilds.orderTime,
+    orderDate: generalFeilds.ordertDate,
+    phone: generalFeilds.USAphone.required(),
     paymentType: joi.string().valid("Card", "Paypal", "Wallet").messages({
-      "any.only": "Payment type must be one of the following: Card, Paypal, or Wallet."
+      "any.only":
+        "Payment type must be one of the following: Card, Paypal, or Wallet.",
     }),
-    meals: joi.array(),
+    meals: joi
+      .array()
+      .items(
+        joi.object({
+          mealId: generalFeilds.id,
+          quantity: joi.number().integer().min(1).required(),
+          flavor: joi.string().optional(),
+        })
+      )
+      .required(),
   })
   .required();
 

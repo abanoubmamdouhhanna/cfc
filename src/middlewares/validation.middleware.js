@@ -150,6 +150,42 @@ export const generalFeilds = {
       "Wisconsin",
       "Wyoming",
     ],
+
+    ordertDate: joi
+    .date()
+    .min(new Date().toISOString().split("T")[0])
+    .messages({
+      "date.base": "Order date must be a valid date.",
+      "date.greater": "Order date must be today or in the future.",
+      "any.required": "Order date is required.",
+    })
+    .required(),
+
+  orderTime: joi 
+    .string()
+    .custom((value, helpers) => {
+      const validTimes = ["09:30", "09:45"];
+      const minutes = ["00", "15", "30", "45"];
+      
+      for (let hour = 10; hour <= 20; hour++) {
+        for (const min of minutes) {
+          // Skip adding "20:45" to match the original logic
+          if (hour === 20 && min === "45") continue;
+          validTimes.push(`${hour.toString().padStart(2, "0")}:${min}`);
+        }
+      }
+      if (!validTimes.includes(value)) {
+        return helpers.message(
+          `Invalid Order time. Please select a time from 09:30 to 20:30 in 15-minute intervals.`
+        );
+      }
+      return value;
+    })
+    .required()
+    .messages({
+      "any.required": "Order time is required.",
+    }),
+
     file: joi.object({
       size: joi.number().positive().required(),
       path: joi.string().required(),
@@ -160,7 +196,7 @@ export const generalFeilds = {
       originalname: joi.string().required(),
       fieldname: joi.string().required(),
     }),
-
+    
   headers: joi.object({
     authorization: joi
       .string()

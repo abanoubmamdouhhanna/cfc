@@ -14,6 +14,7 @@ const orderSchema = new Schema(
         mealId: { type: Types.ObjectId, ref: "Meal", required: true },
         title: { type: String, required: true },
         description: { type: String },
+        flavor: { type: String },
         quantity: { type: Number, default: 1 },
         size: { type: Number, default: 1 },
         unitPrice: { type: Number, default: 1 },
@@ -42,9 +43,18 @@ const orderSchema = new Schema(
       default: "Card",
       enum: ["Card","Paypal","Wallet"],
     },
+    orderDate: {
+      type: String,
+      required: true,
+    },
+    orderTime: {
+      type: String,
+      required: true,
+    },
+  
     invoice: String,
     invoicePublicId: String,
-    stripeSessionId:String,
+    stripeSessionurl:String,
     paypalCheckoutUrl:String,
 
     updatedBy: { type: Types.ObjectId, ref: "User" },

@@ -18,6 +18,8 @@ import {
 } from "../../../utils/wallet rewards.js";
 import { processInvoice } from "../../../utils/invoiceService.js";
 import { ApiFeatures } from "../../../utils/apiFeatures.js";
+import { capitalizeWords } from "../../../utils/capitalize.js";
+import { sendOrderNotification } from "../../../utils/orderNotification.js";
 
 // Create Order
 
@@ -28,6 +30,8 @@ export const createOrder = asyncHandler(async (req, res, next) => {
     state,
     phone,
     couponName,
+    orderTime,
+    orderDate,
     paymentType,
     meals: reqMeals,
   } = req.body;
@@ -51,10 +55,45 @@ export const createOrder = asyncHandler(async (req, res, next) => {
       message: "You already have a pending payment. Please complete it first.",
       paymentUrl:
         existingOrder.paymentType === "Card"
-          ? `https://checkout.stripe.com/pay/${existingOrder.stripeSessionId}`
-          : existingOrder.paypalCheckoutUrl, // Use PayPal URL if payment type is PayPal
+          ? existingOrder.stripeSessionurl
+          : existingOrder.paypalCheckoutUrl,
       orderId: existingOrder._id,
     });
+  }
+
+  const date = new Date(orderDate);
+  if (isNaN(date.getTime())) {
+    return next(
+      new Error(
+        "Invalid order date. Please provide a valid date in 'YYYY-MM-DD' format.",
+        { cause: 422 }
+      )
+    );
+  }
+  if (date < new Date().setHours(0, 0, 0, 0)) {
+    return next(
+      new Error("order date must be today or in the future.", {
+        cause: 400,
+      })
+    );
+  }
+  const now = new Date();
+  if (date.toDateString() === now.toDateString()) {
+    const [selectedHour, selectedMinute] = orderTime.split(":").map(Number);
+    const orderDateTime = new Date();
+    orderDateTime.setHours(selectedHour, selectedMinute, 0, 0);
+
+    if (orderDateTime <= now) {
+      return next(
+        new Error(
+          `Invalid appointment time. Please select a time later than the current moment (${now.getHours()}:${now
+            .getMinutes()
+            .toString()
+            .padStart(2, "0")}).`,
+          { cause: 400 }
+        )
+      );
+    }
   }
 
   // Validate Coupon
@@ -100,6 +139,7 @@ export const createOrder = asyncHandler(async (req, res, next) => {
       unitPrice: checkMeal.finalPrice,
       description: checkMeal.description,
       quantity: meal.quantity,
+      flavor: meal.flavor,
       finalPrice: checkMeal.finalPrice * meal.quantity,
     };
 
@@ -129,6 +169,8 @@ export const createOrder = asyncHandler(async (req, res, next) => {
     tax,
     totalPrice,
     paymentType,
+    orderTime,
+    orderDate,
     customId,
     status: "Pending",
   });
@@ -214,7 +256,7 @@ export const createOrder = asyncHandler(async (req, res, next) => {
       discounts: stripeCouponId ? [{ coupon: stripeCouponId }] : [],
     });
 
-    order.stripeSessionId = session.id; // Save Stripe session ID inside order
+    order.stripeSessionurl = session.url; // Save Stripe session ID inside order
     await order.save();
 
     response.paymentUrl = session.url; // Send Payment URL
@@ -228,6 +270,9 @@ export const createOrder = asyncHandler(async (req, res, next) => {
     await order.save();
     response.message =
       "Order will be prepared successfully. Paid with your CFC wallet";
+    const io = req.app.get("io");
+    if (!io) throw new Error("Socket.IO instance not found");
+    sendOrderNotification(io, order);
   }
 
   // Paypal Payment Handling**
@@ -405,6 +450,49 @@ export const getAllOrders = asyncHandler(async (req, res, next) => {
   });
 });
 //====================================================================================================================//
+//get sp order
+export const getOrder = asyncHandler(async (req, res, next) => {
+  const order = await orderModel
+    .findOne({ _id: req.params.orderId })
+    .select(
+      "address city state phone meals discount tax totalPrice status paymentType"
+    )
+    .populate({
+      path: "userId",
+      select: "firstName lastName",
+    })
+    .populate({
+      path: "locationId",
+      select: "title",
+    });
+
+  if (!order) {
+    return next(new Error(`Order not found`, { cause: 404 }));
+  }
+
+  return res.status(200).json({
+    status: "success",
+    message: `Order`,
+    OrderDetails: {
+      title: order.locationId?.title || "N/A",
+      fullName: capitalizeWords(
+        `${order.userId?.firstName || ""} ${order.userId?.lastName || ""}`
+      ).trim(),
+      address: order.address,
+      city: order.city,
+      state: order.state,
+      phone: order.phone,
+      meals: order.meals,
+      discount: order.discount,
+      tax: order.tax,
+      totalPrice: order.totalPrice,
+      status: order.status,
+      paymentType: order.paymentType,
+    },
+  });
+});
+
+//====================================================================================================================//
 //get location logged in orders
 
 export const getLocationOrders = asyncHandler(async (req, res, next) => {
@@ -501,7 +589,9 @@ export const paypalSuccess = asyncHandler(async (req, res, next) => {
       },
       { new: true }
     );
-
+    const io = req.app.get("io");
+    if (!io) throw new Error("Socket.IO instance not found");
+    sendOrderNotification(io, order);
     return res.status(200).json({
       status: "success",
       message: "PayPal payment was accepted",
@@ -606,10 +696,13 @@ export const stripeSuccess = asyncHandler(async (req, res, next) => {
     orderId,
     {
       status: "Processing",
-      $unset: { stripeSessionId: 1 },
+      $unset: { stripeSessionurl: 1 },
     },
     { new: true }
   );
+  const io = req.app.get("io");
+  if (!io) throw new Error("Socket.IO instance not found");
+  sendOrderNotification(io, order);
 
   //Redirect to frontend success page (if it's a browser request)
   if (req.headers.accept?.includes("text/html")) {
@@ -642,7 +735,7 @@ export const stripeCancel = asyncHandler(async (req, res, next) => {
     orderId,
     {
       status: "Cancelled",
-      $unset: { stripeSessionId: 1 },
+      $unset: { stripeSessionurl: 1 },
     },
     { new: true }
   );
