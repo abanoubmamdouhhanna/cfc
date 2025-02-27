@@ -32,27 +32,27 @@ router.patch(
 
 //orderd delivered
 router.patch(
-  "/:orderId/delivered",
+  "/delivered/:orderId",
   isValid(headersSchema, true),
   auth(["admin", "superAdmin"]),
   isValid(deliveredOrderSchema),
   orderController.deliveredOrder
 );
 
-//get orders with status Processing
-router.get(
-  "/getOrder",
-  isValid(headersSchema, true),
-  auth(["admin", "superAdmin"]),
-  orderController.getOrder
-);
-
 //get all orders
 router.get(
   "/getAllOrders",
+  // isValid(headersSchema, true),
+  // auth(["superAdmin"]),
+  orderController.getAllOrders
+);
+
+//get location logged in orders
+router.get(
+  "/getLocationOrders",
   isValid(headersSchema, true),
   auth(["admin", "superAdmin"]),
-  orderController.getAllOrders
+  orderController.getLocationOrders
 );
 
 //PayPal Payment Success (Query: orderId, token, PayerID)

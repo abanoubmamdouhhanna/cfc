@@ -7,13 +7,13 @@ const userSchema = new Schema(
       min: 3,
       max: 20,
       required: [true, "firstName is required"],
-     },
+    },
     lastName: {
       type: String,
       min: 3,
       max: 20,
       required: [true, "lastName is required"],
-     },
+    },
     email: {
       type: String,
       required: true,
@@ -55,25 +55,23 @@ const userSchema = new Schema(
     otpexp: Date,
     permanentlyDeleted: Date,
     changeAccountInfo: Date,
+    locationId: { type: Types.ObjectId, ref: "Location" },
   },
-  { timestamps: true , toJSON:{virtuals:true},
-  toObject:{virtuals:true},}
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 userSchema.pre("find", function () {
   this.where({ isDeleted: false });
 });
-userSchema.virtual("wishListContent" ,
-  {
-    ref:"Meal",
-    localField:'wishlist',
-    foreignField:'_id'
-  })
-  userSchema.virtual("walletBalance" ,
-    {
-      ref:"Wallet",
-      localField:'_id',
-      foreignField:'userId'
-    })
-  
+userSchema.virtual("wishListContent", {
+  ref: "Meal",
+  localField: "wishlist",
+  foreignField: "_id",
+});
+userSchema.virtual("walletBalance", {
+  ref: "Wallet",
+  localField: "_id",
+  foreignField: "userId",
+});
+
 const userModel = mongoose.models.User || model("User", userSchema);
 export default userModel;

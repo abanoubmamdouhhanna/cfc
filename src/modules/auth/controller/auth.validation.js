@@ -23,6 +23,8 @@ export const authRegisterSchema= joi.object(
 
 export const addAdminSchema= joi.object(
     {
+        locationId:generalFeilds.id,
+        
         email: generalFeilds.email.required(),
 
         firstName: generalFeilds.firstName.required(),

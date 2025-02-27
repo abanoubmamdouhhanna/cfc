@@ -13,7 +13,7 @@ const router = Router();
 router.get(
   "/",
   isValid(headersSchema, true),
-  auth(["user"]),
+  auth(["superAdmin", "admin", "user"]),
   cartController.getCart
 );
 
@@ -21,7 +21,7 @@ router.get(
 router.post(
   "/addToCart",
   isValid(headersSchema, true),
-  auth(["user"]),
+  auth(["superAdmin", "admin", "user"]),
   isValid(addToCartSchema),
   cartController.addToCart
 );
@@ -30,15 +30,15 @@ router.post(
 router.patch(
   "/clearCart",
   isValid(headersSchema, true),
-  auth(["user"]),
+  auth(["superAdmin", "admin", "user"]),
   cartController.clearCart
 );
 
-//clear cart
+//clear cart Item
 router.patch(
   "/clearCartItem",
   isValid(headersSchema, true),
-  auth(["user"]),
+  auth(["superAdmin", "admin", "user"]),
   cartController.clearCartItem
 );
 

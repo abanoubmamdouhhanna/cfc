@@ -21,7 +21,7 @@ router.post(
   locationController.addLocation
 );
 
-//get location
+//get locations
 router.get("/getLoacation", locationController.getLoacation);
 
 //update location

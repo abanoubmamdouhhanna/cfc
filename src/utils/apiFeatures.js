@@ -1,19 +1,14 @@
 export class ApiFeatures {
   constructor(mongooseQuery, queryData) {
-    (this.mongooseQuery = mongooseQuery), (this.queryData = queryData);
+    this.mongooseQuery = mongooseQuery;
+    this.queryData = queryData;
   }
 
   paginate() {
-    let { page, size } = this.queryData;
-    if (!page || page <= 0) {
-      page = 1;
-    }
-    if (!size || size <= 0) {
-      size = 3;
-    }
-    if (size > 10) {
-      size = 10;
-    }
+    let { page = 1, size = 3 } = this.queryData;
+
+    page = Math.max(parseInt(page, 10) || 1, 1); // Ensure valid positive integer
+    size = Math.min(Math.max(parseInt(size, 10) || 3, 1), 10); // Limit between 1 and 10
 
     const skip = (page - 1) * size;
     this.mongooseQuery.limit(size).skip(skip);
@@ -21,46 +16,40 @@ export class ApiFeatures {
   }
 
   filter() {
+    const excludeFields = ["page", "size", "limit", "fields", "search", "sort"];
     let filterQuery = { ...this.queryData };
 
-    const exclude = ["page", "size", "limit", "fields", "search", "sort"];
-    exclude.forEach((key) => {
-      if (filterQuery[key]) {
-        delete filterQuery[key];
-      }
-    });
+    excludeFields.forEach((key) => delete filterQuery[key]);
+
+    // Convert operators (gt, gte, lt, lte, in, nin, eq) to MongoDB syntax
     filterQuery = JSON.parse(
-      JSON.stringify(filterQuery).replace(
-        /\b(gt|gte|lt|lte|in|nin|eq)\b/g,
-        (match) => `$${match}`
-      )
+      JSON.stringify(filterQuery).replace(/\b(gt|gte|lt|lte|in|nin|eq)\b/g, (match) => `$${match}`)
     );
+
     this.mongooseQuery.find(filterQuery);
     return this;
   }
 
   search() {
     if (this.queryData.search) {
-      this.mongooseQuery.find({
-        $or: [
-          { name: { $regex: this.queryData.search, $options: "i" } },
-          { description: { $regex: this.queryData.search, $options: "i" } },
-        ],
-      });
+      const searchRegex = { $regex: this.queryData.search, $options: "i" }; // Case-insensitive search
+      this.mongooseQuery.find({ $or: [{ title: searchRegex }, { description: searchRegex }] });
     }
     return this;
   }
 
   sort() {
     if (this.queryData.sort) {
-      this.mongooseQuery.sort(this.queryData.sort.replaceAll(",", " "));
+      const sortBy = this.queryData.sort.split(",").join(" "); // Convert CSV to space-separated
+      this.mongooseQuery.sort(sortBy);
     }
     return this;
   }
 
   select() {
     if (this.queryData.fields) {
-      this.mongooseQuery.select(this.queryData.fields.replaceAll(",", " "));
+      const selectedFields = this.queryData.fields.split(",").join(" "); // Convert CSV to space-separated
+      this.mongooseQuery.select(selectedFields);
     }
     return this;
   }

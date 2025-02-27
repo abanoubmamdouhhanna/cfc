@@ -23,7 +23,7 @@ router.post(
 
 //create admin
 router.post(
-  "/addAdmin",
+  "/addAdmin/:locationId",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
   isValid(addAdminSchema),

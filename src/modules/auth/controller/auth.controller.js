@@ -58,6 +58,8 @@ export const signUp = asyncHandler(async (req, res, next) => {
 // create admin
 
 export const addAdmin = asyncHandler(async (req, res, next) => {
+  const{locationId}=req.params
+
   const {firstName, lastName, email, password, phone } = req.body;
 
   const existedUser = await userModel.findOne({ email });
@@ -78,7 +80,8 @@ export const addAdmin = asyncHandler(async (req, res, next) => {
     password: hashPassword,
     role: "admin",
     phone,
-    activationCode
+    activationCode,
+    locationId
   });
 
    // Send email asynchronously
@@ -97,8 +100,8 @@ export const addAdmin = asyncHandler(async (req, res, next) => {
 });
 
 //====================================================================================================================//
-
 // log in
+
 export const logIn = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
 
@@ -112,7 +115,7 @@ export const logIn = asyncHandler(async (req, res, next) => {
     .findOne({
       email,
     })
-    .select("password isDeleted isBlocked email role isConfirmed");
+    .select("password isDeleted isBlocked email role isConfirmed locationId");
 
   // Handle user not found or inactive accounts
   if (!user) {
@@ -145,14 +148,15 @@ export const logIn = asyncHandler(async (req, res, next) => {
     );
   }
 
-  // Generate JWT token
   const token = generateToken({
     payload: {
       id: user._id,
       email: user.email,
       role: user.role,
+      ...(user?.locationId ? { locationId: user.locationId } : {}) // Add only if it exists
     },
   });
+
 
   // Update status (optional, based on your business logic)
   if (user.status !== "Active") {

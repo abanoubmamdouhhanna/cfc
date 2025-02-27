@@ -17,6 +17,7 @@ import {
   rewardCustomer,
 } from "../../../utils/wallet rewards.js";
 import { processInvoice } from "../../../utils/invoiceService.js";
+import { ApiFeatures } from "../../../utils/apiFeatures.js";
 
 // Create Order
 
@@ -40,7 +41,7 @@ export const createOrder = asyncHandler(async (req, res, next) => {
     .findOne({
       userId: req.user._id,
       status: "Pending",
-      paymentType: "Card", // Only check for Stripe payments
+      paymentType: { $in: ["Card", "Paypal"] }, // Check for both payment types
     })
     .lean();
 
@@ -48,7 +49,10 @@ export const createOrder = asyncHandler(async (req, res, next) => {
     return res.status(400).json({
       status: "error",
       message: "You already have a pending payment. Please complete it first.",
-      paymentUrl: `https://checkout.stripe.com/pay/${existingOrder.stripeSessionId}`,
+      paymentUrl:
+        existingOrder.paymentType === "Card"
+          ? `https://checkout.stripe.com/pay/${existingOrder.stripeSessionId}`
+          : existingOrder.paypalCheckoutUrl, // Use PayPal URL if payment type is PayPal
       orderId: existingOrder._id,
     });
   }
@@ -265,6 +269,9 @@ export const createOrder = asyncHandler(async (req, res, next) => {
           new Error("PayPal approval link not found", { cause: 500 })
         );
       }
+      order.paypalCheckoutUrl = approveLink; // Save Stripe session ID inside order
+      await order.save();
+
       response.paymentUrl = approveLink;
     } catch (error) {
       return next(
@@ -347,17 +354,22 @@ export const deliveredOrder = asyncHandler(async (req, res, next) => {
   const { orderId } = req.params;
 
   // Find and update the order in one step
-  const order = await orderModel.findOne({ _id: orderId });
+  const order = await orderModel.findOne({
+    _id: orderId,
+    locationId: req.user.locationId,
+  });
 
   if (!order) {
     return next(new Error(`Invalid order ID: ${orderId}`, { cause: 404 }));
   }
 
   // Check if the order is already in a final state
-  if (["Completed", "Cancelled", "Rejected"].includes(order.status)) {
+  if (
+    ["Completed", "Cancelled", "Rejected", "Pending"].includes(order.status)
+  ) {
     return next(
       new Error(
-        `Order with ID ${orderId} cannot be delivered as it is already ${order.status}.`,
+        `Order with ID ${orderId} cannot be delivered as it is ${order.status}.`,
         { cause: 400 }
       )
     );
@@ -377,20 +389,35 @@ export const deliveredOrder = asyncHandler(async (req, res, next) => {
   });
 });
 //====================================================================================================================//
-//get order with status Processing
-export const getOrder = asyncHandler(async (req, res, next) => {
-  const orders = await orderModel.find({ status: "Processing" });
+//get all order
+export const getAllOrders = asyncHandler(async (req, res, next) => {
+  const apiObject = new ApiFeatures(orderModel.find(), req.query)
+    .paginate()
+    .filter()
+    .sort()
+    .select();
+  const orders = await apiObject.mongooseQuery;
   return res.status(200).json({
     status: "success",
-    message: `Orders with status Processing.`,
+    message: `All Orders `,
     count: orders.length,
     result: orders,
   });
 });
 //====================================================================================================================//
-//get all order
-export const getAllOrders = asyncHandler(async (req, res, next) => {
-  const orders = await orderModel.find({});
+//get location logged in orders
+
+export const getLocationOrders = asyncHandler(async (req, res, next) => {
+  if (!req.user || !req.user.locationId) {
+    return next(new Error(`Location ID not found`, { cause: 404 }));
+  }
+  const { locationId } = req.user;
+  const apiObject = new ApiFeatures(orderModel.find({ locationId }), req.query)
+    .paginate()
+    .filter()
+    .sort()
+    .select();
+  const orders = await apiObject.mongooseQuery;
   return res.status(200).json({
     status: "success",
     message: `All Orders `,
@@ -465,16 +492,21 @@ export const paypalSuccess = asyncHandler(async (req, res, next) => {
     } else {
       console.warn("Warning: Order ID is missing, skipping rewardCustomer");
     }
-
     // Update order status
-    order.status = "Processing";
-    await order.save();
+    const updatedOrder = await orderModel.findByIdAndUpdate(
+      orderId,
+      {
+        status: "Processing",
+        $unset: { paypalCheckoutUrl: 1 },
+      },
+      { new: true }
+    );
 
     return res.status(200).json({
       status: "success",
       message: "PayPal payment was accepted",
       orderId,
-      order,
+      updatedOrder,
     });
 
     // res.redirect(`${process.env.FRONTEND_URL}/payment-success?orderId=${orderId}`);
@@ -516,15 +548,21 @@ export const paypalCancel = asyncHandler(async (req, res, next) => {
     }
 
     // Update order status to "Cancelled"
-    order.status = "Cancelled";
-    await order.save();
+    const updatedOrder = await orderModel.findByIdAndUpdate(
+      orderId,
+      {
+        status: "Cancelled",
+        $unset: { paypalCheckoutUrl: 1 },
+      },
+      { new: true }
+    );
 
     // Prepare response data
     const responseData = {
       status: "cancelled",
       message: "PayPal payment was canceled. You can retry anytime.",
       orderId,
-      order,
+      updatedOrder,
     };
 
     // API Response (for JSON requests)
@@ -563,8 +601,15 @@ export const stripeSuccess = asyncHandler(async (req, res, next) => {
   if (!order) return next(new Error("Order not found", { cause: 404 }));
   processInvoice(order, req.user);
 
-  order.status = "Processing"; //Mark order as paid
-  await order.save();
+  // Update order status
+  const updatedOrder = await orderModel.findByIdAndUpdate(
+    orderId,
+    {
+      status: "Processing",
+      $unset: { stripeSessionId: 1 },
+    },
+    { new: true }
+  );
 
   //Redirect to frontend success page (if it's a browser request)
   if (req.headers.accept?.includes("text/html")) {
@@ -578,7 +623,7 @@ export const stripeSuccess = asyncHandler(async (req, res, next) => {
     status: "success",
     message: "Stripe payment successful! Your order is being prepared.",
     orderId,
-    order,
+    updatedOrder,
   });
 });
 //====================================================================================================================//
@@ -592,9 +637,15 @@ export const stripeCancel = asyncHandler(async (req, res, next) => {
   const order = await orderModel.findById(orderId);
   if (!order) return next(new Error("Order not found", { cause: 404 }));
 
-  //Keep the order in "Pending" status
-  order.status = "Pending";
-  await order.save();
+  // Update order status
+  const updatedOrder = await orderModel.findByIdAndUpdate(
+    orderId,
+    {
+      status: "Cancelled",
+      $unset: { stripeSessionId: 1 },
+    },
+    { new: true }
+  );
 
   //Handle browser & API responses
   if (req.headers.accept?.includes("text/html")) {
@@ -607,6 +658,6 @@ export const stripeCancel = asyncHandler(async (req, res, next) => {
     status: "cancelled",
     message: "Stripe payment was canceled. You can retry anytime.",
     orderId,
-    order,
+    updatedOrder,
   });
 });

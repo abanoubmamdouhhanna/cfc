@@ -32,7 +32,6 @@ const orderSchema = new Schema(
       enum: [
         "Pending",
         "Processing",
-        "Prepared",
         "Completed",
         "Cancelled",
         "Rejected",
@@ -46,6 +45,7 @@ const orderSchema = new Schema(
     invoice: String,
     invoicePublicId: String,
     stripeSessionId:String,
+    paypalCheckoutUrl:String,
 
     updatedBy: { type: Types.ObjectId, ref: "User" },
     isDeleted: { type: Boolean, default: false },

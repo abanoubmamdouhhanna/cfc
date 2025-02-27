@@ -3,19 +3,15 @@ import mealModel from "../../../../DB/models/meal.model.js";
 import { asyncHandler } from "../../../utils/errorHandling.js";
 
 //get cart
-export const getCart=asyncHandler(async(req,res,next)=>
-{
-  const cart =await cartModel.findById(req.user._id)
-  return res
-  .status(200)
-  .json({
+export const getCart = asyncHandler(async (req, res, next) => {
+  const cart = await cartModel.find({ createdBy: req.user._id }).lean();
+
+  return res.status(200).json({
     status: "success",
-    message: "User Cart",
+    message: "user Cart",
     result: cart,
   });
-
-}
-)
+});
 //====================================================================================================================//
 //add to cart
 
@@ -26,7 +22,7 @@ export const addToCart = asyncHandler(async (req, res, next) => {
     return next(new Error("In-valid meal Id", { cause: 400 }));
   }
 
-  if (meal.status == "not avialable" || meal.isDeleted ) {
+  if (meal.status == "not avialable" || meal.isDeleted) {
     await mealModel.updateOne(
       { _id: mealId },
       { $addToSet: { wishUser: req.user._id } }
@@ -45,13 +41,11 @@ export const addToCart = asyncHandler(async (req, res, next) => {
       createdBy: req.user.id,
       meals: [{ mealId, quantity }],
     });
-    return res
-      .status(201)
-      .json({
-        status: "success",
-        message: "Cart created successfully",
-        result: newCart,
-      });
+    return res.status(201).json({
+      status: "success",
+      message: "Cart created successfully",
+      result: newCart,
+    });
   }
   //update cart items
   let matchmeal = false;
@@ -68,35 +62,27 @@ export const addToCart = asyncHandler(async (req, res, next) => {
     cart.meals.push({ mealId, quantity });
   }
   await cart.save();
-  return res
-    .status(201)
-    .json({
-      status: "success",
-      message: "Cart created successfully",
-      result: cart,
-    });
+  return res.status(201).json({
+    status: "success",
+    message: "Cart created successfully",
+    result: cart,
+  });
 });
 
 //====================================================================================================================//
 //clear cart
 
-export async function clearAllCartItems(createdBy)
-{
-  const cart = await cartModel.updateOne({createdBy},{meals:[]})
-  return cart
-
+export async function clearAllCartItems(createdBy) {
+  const cart = await cartModel.updateOne({ createdBy }, { meals: [] });
+  return cart;
 }
-export const clearCart=asyncHandler(async(req,res,next)=>
-{
-  await clearAllCartItems(req.user._id)
-    return res
-    .status(200)
-    .json({
-      status: "success",
-      message: "Cart cleared successfully"
-    });
-}
-)
+export const clearCart = asyncHandler(async (req, res, next) => {
+  await clearAllCartItems(req.user._id);
+  return res.status(200).json({
+    status: "success",
+    message: "Cart cleared successfully",
+  });
+});
 
 //====================================================================================================================//
 //clear Cart Item
@@ -114,14 +100,14 @@ export async function clearSelectedItems(mealIds, createdBy) {
   return cart;
 }
 
-export const clearCartItem=asyncHandler(async(req,res,next)=>
-{
-  const {mealIds}=req.body
-  await clearSelectedItems(mealIds,req.user._id)
-  return res
-    .status(200)
-    .json({
-      status: "success",
-      message: "Cart item selected cleared successfully"
-    });
-})
+export const clearCartItem = asyncHandler(async (req, res, next) => {
+  const { mealIds } = req.body;
+  if (!mealIds) {
+    return next(new Error("Empty cart"));
+  }
+  await clearSelectedItems(mealIds, req.user._id);
+  return res.status(200).json({
+    status: "success",
+    message: "Cart item selected cleared successfully",
+  });
+});

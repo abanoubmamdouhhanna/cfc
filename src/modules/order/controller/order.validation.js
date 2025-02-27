@@ -15,7 +15,7 @@ export const createOrderSchema = joi
     paymentType: joi.string().valid("Card", "Paypal", "Wallet").messages({
       "any.only": "Payment type must be one of the following: Card, Paypal, or Wallet."
     }),
-    meals: joi.array().required(),
+    meals: joi.array(),
   })
   .required();
 
