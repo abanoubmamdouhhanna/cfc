@@ -491,6 +491,26 @@ export const getOrder = asyncHandler(async (req, res, next) => {
     },
   });
 });
+//====================================================================================================================//
+//get user orders
+
+export const getUserOrders = asyncHandler(async (req, res, next) => {
+  if (!req.user) {
+    return next(new Error(`please login first`, { cause: 404 }));
+  }
+  const apiObject = new ApiFeatures(orderModel.find({userId: req.user._id}), req.query)
+    .paginate()
+    .filter()
+    .sort()
+    .select();
+  const orders = await apiObject.mongooseQuery;
+  return res.status(200).json({
+    status: "success",
+    message: `All user Orders `,
+    count: orders.length,
+    result: orders,
+  });
+});
 
 //====================================================================================================================//
 //get location logged in orders

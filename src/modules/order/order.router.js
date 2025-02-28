@@ -53,6 +53,13 @@ router.get(
   auth(["superAdmin","user"]),
   orderController.getOrder
 );
+//get order history for user
+router.get(
+  "/getUserOrders",
+  isValid(headersSchema, true),
+  auth(["superAdmin","user"]),
+  orderController.getUserOrders
+);
 
 //get location logged in orders
 router.get(
