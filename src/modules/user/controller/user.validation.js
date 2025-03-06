@@ -5,6 +5,7 @@ export const headersSchema = generalFeilds.headers;
 
 export const updateUserSchema = joi
   .object({
+    email:generalFeilds.email,
     phone: generalFeilds.phone,
     firstName: generalFeilds.firstName,
     lastName: generalFeilds.lastName,
