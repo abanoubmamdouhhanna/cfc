@@ -28,7 +28,7 @@ router.patch(
 router.delete(
   "/deleteReview/:reviewId",
   isValid(headersSchema, true),
-  auth(["superAdmin"]),
+  auth(["superAdmin","user"]),
   isValid(deleteReviewSchema),
   reviewController.deleteReview
 );

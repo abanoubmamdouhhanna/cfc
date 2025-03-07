@@ -43,5 +43,4 @@ router.delete(
   isValid(deleteCouponSchema),
   couponController.deleteCoupon
 );
-
 export default router;

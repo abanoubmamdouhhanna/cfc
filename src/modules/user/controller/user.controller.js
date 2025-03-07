@@ -163,6 +163,7 @@ export const accountRecovery = asyncHandler(async (req, res, next) => {
   });
 });
 
+//====================================================================================================================//
 //get all users
 export const getAllUsers =asyncHandler(async(req,res,next)=>
 {
