@@ -48,11 +48,7 @@ export const generalFeilds = {
   cPassword: joi.string().messages({
     "any.only": "The confirmation password must be the same as the password",
   }),
-  phone: joi
-    .string()
-    .pattern(/^(\+2)?01[0125][0-9]{8}$/)
-    .messages({ "string.pattern.base": "please Enter a valid phone Number" }),
-    USAphone: joi
+   USAphone: joi
     .string()
     .pattern(/^(\+1)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/)
     .messages({ "string.pattern.base": "please Enter a valid phone Number" }),

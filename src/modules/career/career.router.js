@@ -1,7 +1,7 @@
 import Router from "express";
 import * as careerController from "./controller/career.controller.js";
 import {
-  adddCareerSchema,
+  addCareerSchema,
   headersSchema,
   updateCareerSchema,
 } from "./controller/career.validation.js";
@@ -14,7 +14,7 @@ router.post(
   "/addCareer",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  isValid(adddCareerSchema),
+  isValid(addCareerSchema),
   careerController.addCareer
 );
 

@@ -54,7 +54,7 @@ export const authRegisterSchema = joi.object({
       'any.required': errorMessages.required
     }),
 
-  phone: generalFeilds.phone
+  phone: generalFeilds.USAphone
     .required()
     .messages({
       'string.empty': errorMessages.required,
@@ -110,7 +110,7 @@ export const addAdminSchema = joi.object({
       'any.required': errorMessages.required
     }),
 
-  phone: generalFeilds.phone
+  phone: generalFeilds.USAphone
     .required()
     .messages({
       'string.empty': errorMessages.required,

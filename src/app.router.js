@@ -1,3 +1,4 @@
+import cookieParser from "cookie-parser"
 import connectDB from "../DB/connection.js";
 import { glopalErrHandling } from "./utils/errorHandling.js";
 import authRouter from "./modules/auth/auth.router.js";
@@ -20,6 +21,8 @@ import paymentRouter from "./utils/paymentRouter.js";
 
 const initApp = (app, express) => {
   app.use(express.json({}));
+  app.use(cookieParser()) 
+
 
   app.use("/auth", authRouter);
   app.use("/user", userRouter);

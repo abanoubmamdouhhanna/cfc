@@ -160,6 +160,13 @@ export const logIn = asyncHandler(async (req, res, next) => {
       ...(user?.locationId ? { locationId: user.locationId } : {}), // Add only if it exists
     },
   });
+  res.cookie("jwt", token , {
+    maxAge:7*24*60*60*1000 ,
+    httpOnly:true ,
+    sameSite:"None",
+    secure:true
+    
+    })
 
   // Update status (optional, based on your business logic)
   if (user.status !== "Active") {
@@ -180,9 +187,15 @@ export const logIn = asyncHandler(async (req, res, next) => {
 export const logOut = asyncHandler(async (req, res, next) => {
   await userModel.findByIdAndUpdate(
     req.user._id,
-    { status: "not Active" },
+    { availability:"Offline" },
     { new: true }
   );
+  res.cookie("jwt","", {
+    maxAge:1,
+    sameSite:"None",
+    secure:true
+    
+    })
   return res.status(200).json({
     status: "success",
     message: "LoggedOut successfully",
