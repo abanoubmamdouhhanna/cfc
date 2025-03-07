@@ -168,11 +168,22 @@ export const logIn = asyncHandler(async (req, res, next) => {
     
     })
 
-  // Update status (optional, based on your business logic)
-  if (user.status !== "Active") {
-    user.status = "Active";
-    await user.save();
-  }
+    let loggedIn = false;
+
+    if (user.status !== "Active") {
+      user.status = "Active";
+      loggedIn = true;
+    }
+    
+    if (user.availability !== "online") {
+      user.availability = "online";
+      loggedIn = true;
+    }
+    
+    if (loggedIn) {
+      await user.save();
+    }
+    
 
   // Respond to client
   return res.status(200).json({
