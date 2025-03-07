@@ -3,7 +3,7 @@ import { nanoid } from "nanoid";
 import cartModel from "../../../../DB/models/Cart.model.js";
 import couponModel from "../../../../DB/models/Coupon.model.js";
 import orderModel from "../../../../DB/models/Order.model.js";
-import mealModel from "../../../../DB/models/meal.model.js";
+import mealModel from "../../../../DB/models/Meal.model.js";
 import Stripe from "stripe";
 import locationModel from "../../../../DB/models/CFClocation.model.js";
 import paypalClient from "../../../utils/paypalService.js";

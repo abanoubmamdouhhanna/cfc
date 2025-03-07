@@ -50,7 +50,7 @@ router.get(
 router.get(
   "/getOrder/:orderId",
   isValid(headersSchema, true),
-  auth(["superAdmin","user"]),
+  auth(["superAdmin","admin","user"]),
   orderController.getOrder
 );
 //get order history for user

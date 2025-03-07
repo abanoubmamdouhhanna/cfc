@@ -162,3 +162,14 @@ export const accountRecovery = asyncHandler(async (req, res, next) => {
     result: user,
   });
 });
+
+//get all users
+export const getAllUsers =asyncHandler(async(req,res,next)=>
+{
+  const allUsers=await userModel.find({role:"user"})
+  return res.status(200).json({
+    status: "success",
+    message: "All users successfully",
+    result: allUsers,
+  });
+})

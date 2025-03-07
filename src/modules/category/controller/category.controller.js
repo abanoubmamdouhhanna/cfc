@@ -8,6 +8,7 @@ import mealModel from "../../../../DB/models/Meal.model.js";
 
 import { uploadToCloudinary } from "../../../utils/uploadHelper.js";
 
+//add category
 export const addCategory = asyncHandler(async (req, res, next) => {
   if (!req.file) {
     return next(new Error("category image is required"));

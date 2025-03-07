@@ -4,7 +4,7 @@ import { asyncHandler } from "../../../utils/errorHandling.js";
 import { uploadToCloudinary } from "../../../utils/uploadHelper.js";
 import cloudinary from "../../../utils/cloudinary.js";
 
-//add career
+//add location
 export const addLocation = asyncHandler(async (req, res, next) => {
   const { title, address, phone, hours, locationURL, taxRate } = req.body;
 

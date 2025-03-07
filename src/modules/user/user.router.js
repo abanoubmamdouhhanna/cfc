@@ -47,4 +47,12 @@ router.patch(
 //recover account
 router.get("/accountRecovery/:reactiveToken", userController.accountRecovery);
 
+//get all users
+router.get(
+  "/getAllUsers",
+  isValid(headersSchema, true),
+  auth(["superAdmin"]),
+  userController.getAllUsers
+);
+
 export default router;
