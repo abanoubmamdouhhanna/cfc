@@ -12,10 +12,11 @@ import {
 import userModel from "../../../../DB/models/User.model.js";
 import { activationMail } from "../../../utils/Emails/activationMail.js";
 import { emitter } from "../../../utils/eventEmitter.js";
+import { emailres } from "../../../utils/Emails/emailres.js";
 
 // registeration
 export const signUp = asyncHandler(async (req, res, next) => {
-  const { email,firstName, lastName,  password, phone } = req.body;
+  const { email, firstName, lastName, password, phone } = req.body;
 
   const existedUser = await userModel.findOne({ email });
 
@@ -33,23 +34,24 @@ export const signUp = asyncHandler(async (req, res, next) => {
   const createUser = await userModel.create({
     email,
     firstName,
-    lastName, 
+    lastName,
     password: hashPassword,
     phone,
-    activationCode
+    activationCode,
   });
   // Send email asynchronously
   const protocol = req.protocol;
   const host = req.headers.host;
   const html = activationMail(activationCode, protocol, host);
 
-  emitter.emit("register",{
-    email,html
-  })
-  
+  emitter.emit("register", {
+    email,
+    html,
+  });
+
   // Respond immediately without waiting for the email to be sent
   return res.status(201).json({
-    message:"User added successfully. Please check your email for activation.",
+    message: "User added successfully. Please check your email for activation.",
     user: createUser._id,
   });
 });
@@ -58,9 +60,9 @@ export const signUp = asyncHandler(async (req, res, next) => {
 // create admin
 
 export const addAdmin = asyncHandler(async (req, res, next) => {
-  const{locationId}=req.params
+  const { locationId } = req.params;
 
-  const {firstName, lastName, email, password, phone } = req.body;
+  const { firstName, lastName, email, password, phone } = req.body;
 
   const existedUser = await userModel.findOne({ email });
 
@@ -76,27 +78,29 @@ export const addAdmin = asyncHandler(async (req, res, next) => {
   const createUser = await userModel.create({
     email,
     firstName,
-    lastName, 
+    lastName,
     password: hashPassword,
     role: "admin",
     phone,
     activationCode,
-    locationId
+    locationId,
   });
 
-   // Send email asynchronously
-   const protocol = req.protocol;
-   const host = req.headers.host;
-   const html = activationMail(activationCode, protocol, host);
+  // Send email asynchronously
+  const protocol = req.protocol;
+  const host = req.headers.host;
+  const html = activationMail(activationCode, protocol, host);
 
-   emitter.emit("register",{
-    email,html
-  })
-   // Respond immediately without waiting for the email to be sent
-   return res.status(201).json({
-     message:"Admin added successfully. Please check email you added for activation.",
-     user: createUser._id,
-   });
+  emitter.emit("register", {
+    email,
+    html,
+  });
+  // Respond immediately without waiting for the email to be sent
+  return res.status(201).json({
+    message:
+      "Admin added successfully. Please check email you added for activation.",
+    user: createUser._id,
+  });
 });
 
 //====================================================================================================================//
@@ -153,10 +157,9 @@ export const logIn = asyncHandler(async (req, res, next) => {
       id: user._id,
       email: user.email,
       role: user.role,
-      ...(user?.locationId ? { locationId: user.locationId } : {}) // Add only if it exists
+      ...(user?.locationId ? { locationId: user.locationId } : {}), // Add only if it exists
     },
   });
-
 
   // Update status (optional, based on your business logic)
   if (user.status !== "Active") {
@@ -198,7 +201,7 @@ export const activateAcc = asyncHandler(async (req, res, next) => {
   );
 
   return user.matchedCount
-    ? res.status(200).send("congratulations, your account is now activated")
+    ? res.status(200).send(emailres)
     : next(new Error("Account not found", { cause: 404 }));
 });
 //====================================================================================================================//
@@ -215,13 +218,13 @@ export const reActivateAcc = asyncHandler(async (req, res, next) => {
 
     const html = activationMail(user.activationCode, protocol, host);
 
-    emitter.emit("reActiveAccount",{
-      email,html
-    })
+    emitter.emit("reActiveAccount", {
+      email,
+      html,
+    });
     return res.status(200).json({
       message: "Check your email we already sent an activation mail ",
     });
-    
   }
   return next(new Error("Your account is already confirmed", { cause: 400 }));
 });
@@ -246,10 +249,11 @@ export const forgetPasswordOTP = asyncHandler(async (req, res, next) => {
 
   const html = otpEmail(OTP, redirectLink);
 
-  emitter.emit("forgetPassword",{
-    email,html
-  })
-  
+  emitter.emit("forgetPassword", {
+    email,
+    html,
+  });
+
   return res.status(200).json({
     status: "success",
     message: "OTP code have been sent to your account",

@@ -64,7 +64,7 @@ export const apply = asyncHandler(async (req, res, next) => {
     .json({ message: "Job application created successfully", jobApplication });
 });
 //====================================================================================================================//
-//get hires
+//get jobs
 export const getJobs = asyncHandler(async (req, res, next) => {
   const JobApps = await jobModel.find({});
   return res.status(200).json({
@@ -74,7 +74,7 @@ export const getJobs = asyncHandler(async (req, res, next) => {
   });
 });
 //====================================================================================================================//
-//delete hire
+//delete job
 
 export const deleteJob = asyncHandler(async (req, res, next) => {
   const job = await jobModel.findByIdAndDelete(req.params.jobId);
@@ -90,7 +90,7 @@ export const deleteJob = asyncHandler(async (req, res, next) => {
 });
 
 //====================================================================================================================//
-//delete all hires
+//delete all jobs
 
 export const deleteAllJobs = asyncHandler(async (req, res, next) => {
   const jobs = await jobModel.deleteMany();
