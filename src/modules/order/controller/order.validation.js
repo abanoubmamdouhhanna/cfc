@@ -4,7 +4,7 @@ import { generalFeilds } from "../../../middlewares/validation.middleware.js";
 // Define payment types as constants for better maintenance
 const PAYMENT_TYPES = {
   CARD: "Card",
-  PAYPAL: "Paypal",
+  PAYPAL: "PayPal",
   WALLET: "Wallet"
 };
 

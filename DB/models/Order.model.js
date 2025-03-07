@@ -41,7 +41,7 @@ const orderSchema = new Schema(
     paymentType: {
       type: String,
       default: "Card",
-      enum: ["Card","Paypal","Wallet"],
+      enum: ["Card","PayPal","Wallet"],
     },
     orderDate: {
       type: String,

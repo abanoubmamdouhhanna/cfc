@@ -45,7 +45,7 @@ export const createOrder = asyncHandler(async (req, res, next) => {
     .findOne({
       userId: req.user._id,
       status: "Pending",
-      paymentType: { $in: ["Card", "Paypal"] }, // Check for both payment types
+      paymentType: { $in: ["Card", "PayPal"] }, // Check for both payment types
     })
     .lean();
 
@@ -276,7 +276,7 @@ export const createOrder = asyncHandler(async (req, res, next) => {
   }
 
   // Paypal Payment Handling**
-  if (paymentType === "Paypal") {
+  if (paymentType === "PayPal") {
     rewardCustomer(req.user._id, order._id, order.totalPrice);
     const request = new paypal.orders.OrdersCreateRequest();
     request.prefer("return=representation");
