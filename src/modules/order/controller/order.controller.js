@@ -498,7 +498,10 @@ export const getUserOrders = asyncHandler(async (req, res, next) => {
   if (!req.user) {
     return next(new Error(`please login first`, { cause: 404 }));
   }
-  const apiObject = new ApiFeatures(orderModel.find({userId: req.user._id}), req.query)
+  const apiObject = new ApiFeatures(
+    orderModel.find({ userId: req.user._id }),
+    req.query
+  )
     .paginate()
     .filter()
     .sort()
@@ -565,12 +568,8 @@ export const paypalSuccess = asyncHandler(async (req, res, next) => {
       );
     }
 
-    // Log user data
-    console.log("User Data:", req.user);
-
     // Ensure `req.user` is available before using `_id`
     if (!req.user || !req.user._id) {
-      console.error("Error: req.user is undefined or missing _id");
       return next(new Error("User authentication required", { cause: 401 }));
     }
 
@@ -582,14 +581,13 @@ export const paypalSuccess = asyncHandler(async (req, res, next) => {
 
     // Handle case where order is not found
     if (!order) {
-      console.error(
-        `Error: Order not found. orderId=${orderId}, userId=${req.user._id}`
+      return next(
+        new Error(
+          `Order not found.  orderId=${orderId}, userId=${req.user._id}`,
+          { cause: 404 }
+        )
       );
-      return next(new Error("Order not found", { cause: 404 }));
     }
-
-    // Log order data
-    console.log("Order Data:", order);
 
     // Process invoice & reward customer
     processInvoice(order, req.user);
