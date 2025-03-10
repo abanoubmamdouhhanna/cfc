@@ -27,6 +27,10 @@ router.post(
 //get categories
 router.get("/getCategories", categoryController.getCategories);
 
+//get categories with meals
+router.get("/getCategoriesWithMeals", categoryController.getCategoriesWithMeals);
+
+
 //update category
 router.patch(
   "/updateCategory/:categoryId",

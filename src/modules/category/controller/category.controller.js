@@ -52,7 +52,7 @@ export const addCategory = asyncHandler(async (req, res, next) => {
 //====================================================================================================================//
 //get categories
 export const getCategories = asyncHandler(async (req, res, next) => {
-  const category = await categoryModel
+  const categories = await categoryModel
     .find({}, "name imageURL status createdBy ")
     .populate([
       {
@@ -68,9 +68,48 @@ export const getCategories = asyncHandler(async (req, res, next) => {
   return res.status(200).json({
     status: "success",
     message: "Done",
-    result: category,
+    result: categories,
   });
 });
+//====================================================================================================================//
+//get categories with meals
+
+export const getCategoriesWithMeals = asyncHandler(async (req, res, next) => {
+  const categories = await categoryModel
+    .find({}, "name imageURL status createdBy")
+    .populate({
+      path: "SubCategories",
+      select: "_id", // Only need `_id` to use in another query
+      populate: {
+        path: "viewMeals",
+        select:
+          "title image flavor price discount finalPrice size wishUser status",
+      },
+    });
+
+  // Transform result: Extract meals directly inside categories
+  const transformedCategories = categories.map((category) => {
+    const meals = category.SubCategories.flatMap(
+      (subCategory) => subCategory.viewMeals
+    );
+
+    return {
+      _id: category._id,
+      name: category.name,
+      imageURL: category.imageURL,
+      status: category.status,
+      createdBy: category.createdBy,
+      meals: meals, // Meals directly inside category
+    };
+  });
+
+  return res.status(200).json({
+    status: "success",
+    message: "Done",
+    result: transformedCategories,
+  });
+});
+
 //====================================================================================================================//
 //update Category
 export const updateCategory = asyncHandler(async (req, res, next) => {
