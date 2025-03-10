@@ -1,5 +1,5 @@
 import cartModel from "../../../../DB/models/Cart.model.js";
-import mealModel from "../../../../DB/models/meal.model.js";
+import mealModel from "../../../../DB/models/Meal.model.js";
 import { asyncHandler } from "../../../utils/errorHandling.js";
 
 //get cart
