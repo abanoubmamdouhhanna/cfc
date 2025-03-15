@@ -175,8 +175,8 @@ export const logIn = asyncHandler(async (req, res, next) => {
       loggedIn = true;
     }
     
-    if (user.availability !== "online") {
-      user.availability = "online";
+    if (user.availability !== "Online") {
+      user.availability = "Online";
       loggedIn = true;
     }
     

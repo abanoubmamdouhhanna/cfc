@@ -30,18 +30,17 @@ const orderSchema = new Schema(
     status: {
       type: String,
       default: "Pending",
-      enum: [
-        "Pending",
-        "Processing",
-        "Completed",
-        "Cancelled",
-        "Rejected",
-      ],
+      enum: ["Pending", "Processing", "Completed", "Cancelled", "Rejected"],
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid"],
+      default: "pending",
     },
     paymentType: {
       type: String,
       default: "Card",
-      enum: ["Card","PayPal","Wallet"],
+      enum: ["Card", "PayPal", "Wallet"],
     },
     orderDate: {
       type: String,
@@ -51,11 +50,11 @@ const orderSchema = new Schema(
       type: String,
       required: true,
     },
-  
+
     invoice: String,
     invoicePublicId: String,
-    stripeSessionurl:String,
-    paypalCheckoutUrl:String,
+    stripeSessionurl: String,
+    paypalCheckoutUrl: String,
 
     updatedBy: { type: Types.ObjectId, ref: "User" },
     isDeleted: { type: Boolean, default: false },

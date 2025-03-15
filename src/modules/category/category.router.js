@@ -30,6 +30,9 @@ router.get("/getCategories", categoryController.getCategories);
 //get categories with meals
 router.get("/getCategoriesWithMeals", categoryController.getCategoriesWithMeals);
 
+//get category with meals
+router.get("/getCategoryWithMeals/:categoryId", categoryController.getCategoryWithMeals);
+
 
 //update category
 router.patch(

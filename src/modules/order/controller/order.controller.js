@@ -267,7 +267,7 @@ export const createOrder = asyncHandler(async (req, res, next) => {
     await payWithEwallet(req.user._id, order.totalPrice);
     processInvoice(order, req.user);
     order.status = "Processing";
-    await order.save();
+    (order.paymentStatus = "paid"), await order.save();
     response.message =
       "Order will be prepared successfully. Paid with your CFC wallet";
     const io = req.app.get("io");
@@ -277,7 +277,7 @@ export const createOrder = asyncHandler(async (req, res, next) => {
 
   // Paypal Payment Handling**
   if (paymentType === "PayPal") {
-    rewardCustomer(req.user._id, order._id, order.totalPrice);
+    // rewardCustomer(req.user._id, order._id, order.totalPrice);
     const request = new paypal.orders.OrdersCreateRequest();
     request.prefer("return=representation");
     request.requestBody({
@@ -588,7 +588,11 @@ export const paypalSuccess = asyncHandler(async (req, res, next) => {
         )
       );
     }
-
+    if (order.paymentStatus === "paid") {
+      return next(
+        new Error("Payment already processed for this order.", { cause: 400 })
+      );
+    }
     // Process invoice & reward customer
     processInvoice(order, req.user);
 
@@ -603,6 +607,7 @@ export const paypalSuccess = asyncHandler(async (req, res, next) => {
       orderId,
       {
         status: "Processing",
+        paymentStatus: "paid",
         $unset: { paypalCheckoutUrl: 1 },
       },
       { new: true }
@@ -708,12 +713,23 @@ export const stripeSuccess = asyncHandler(async (req, res, next) => {
   const order = await orderModel.findById(orderId);
   if (!order) return next(new Error("Order not found", { cause: 404 }));
   processInvoice(order, req.user);
+  if (order.paymentStatus === "paid") {
+    return next(
+      new Error("Payment already processed for this order.", { cause: 400 })
+    );
+  }
+  if (order._id) {
+    rewardCustomer(req.user._id, order._id, order.totalPrice);
+  } else {
+    console.warn("Warning: Order ID is missing, skipping rewardCustomer");
+  }
 
   // Update order status
   const updatedOrder = await orderModel.findByIdAndUpdate(
     orderId,
     {
       status: "Processing",
+      paymentStatus: "paid", // Mark as paid
       $unset: { stripeSessionurl: 1 },
     },
     { new: true }

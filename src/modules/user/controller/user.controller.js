@@ -7,6 +7,7 @@ import {
   generateToken,
   verifyToken,
 } from "../../../utils/generateAndVerifyToken.js";
+import { redeemPoints } from "../../../utils/wallet rewards.js";
 
 //user profile
 export const userProfile = asyncHandler(async (req, res, next) => {
@@ -173,4 +174,25 @@ export const getAllUsers =asyncHandler(async(req,res,next)=>
     message: "All users successfully",
     result: allUsers,
   });
+})
+//====================================================================================================================//
+//redeem rewards
+
+export const handleRedeemPoints=asyncHandler(async(req,res,next)=>
+{
+  const { pointsToRedeem } = req.body;
+  const userId=req.user._id
+
+  if (!userId || !pointsToRedeem) {
+    return res.status(400).json({ message: "User ID and points to redeem are required." });
+  }
+
+  const redeemedAmount = await redeemPoints(userId, pointsToRedeem);
+
+  return res.status(200).json({
+    message: "Points redeemed successfully.",
+    redeemedAmount,
+    requestedPoints: pointsToRedeem,
+  });
+
 })

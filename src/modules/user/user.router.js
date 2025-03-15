@@ -55,4 +55,12 @@ router.get(
   userController.getAllUsers
 );
 
+//redeem rewards
+router.post(
+  "/redeem",
+  isValid(headersSchema, true),
+  auth(["superAdmin", "user"]),
+  userController.handleRedeemPoints
+);
+
 export default router;
