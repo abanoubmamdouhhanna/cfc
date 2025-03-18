@@ -4,7 +4,7 @@ import { asyncHandler } from "../../../utils/errorHandling.js";
 
 //get cart
 export const getCart = asyncHandler(async (req, res, next) => {
-  const cart = await cartModel.find({ createdBy: req.user._id }).lean();
+  const cart = await cartModel.findOne({ createdBy: req.user._id }).lean();
 
   return res.status(200).json({
     status: "success",
