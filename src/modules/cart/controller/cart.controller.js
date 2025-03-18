@@ -6,7 +6,7 @@ import { asyncHandler } from "../../../utils/errorHandling.js";
 export const getCart = asyncHandler(async (req, res, next) => {
   const cart = await cartModel.findOne({ createdBy: req.user._id }).populate({
     path: "meals.mealId",
-    select: "name price description imageUrl", // Select only the fields you need
+    select: "title finalPrice description image", // Select only the fields you need
   }).lean()
 
   return res.status(200).json({
