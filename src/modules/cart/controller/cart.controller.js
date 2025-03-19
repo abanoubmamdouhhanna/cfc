@@ -37,7 +37,10 @@ export const addToCart = asyncHandler(async (req, res, next) => {
     );
   }
 
-  const cart = await cartModel.findOne({ createdBy: req.user._id });
+  const cart = await cartModel.findOne({ createdBy: req.user._id }).populate({
+    path: "meals.mealId",
+    select: "title finalPrice description image", // Select only the fields you need
+  })
   //create cart for first time
   if (!cart) {
     const newCart = await cartModel.create({
