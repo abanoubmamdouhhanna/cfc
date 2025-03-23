@@ -22,58 +22,55 @@ export const addToCart = asyncHandler(async (req, res, next) => {
   const { mealId, quantity } = req.body;
   const meal = await mealModel.findById(mealId);
   if (!meal) {
-    return next(new Error("In-valid meal Id", { cause: 400 }));
+    return next(new Error("Invalid meal Id", { cause: 400 }));
   }
 
-  if (meal.status == "not avialable" || meal.isDeleted) {
+  if (meal.status == "not available" || meal.isDeleted) {
     await mealModel.updateOne(
       { _id: mealId },
       { $addToSet: { wishUser: req.user._id } }
     );
     return next(
-      new Error("You can't buy this meal at least right now", {
-        cause: 400,
-      })
+      new Error("You can't buy this meal at least right now", { cause: 400 })
     );
   }
 
-  const cart = await cartModel.findOne({ createdBy: req.user._id }).populate({
-    path: "meals.mealId",
-    select: "title finalPrice description image", // Select only the fields you need
-  })
-  //create cart for first time
+  let cart = await cartModel.findOne({ createdBy: req.user._id });
+
+  // If cart doesn't exist, create a new one
   if (!cart) {
-    const newCart = await cartModel.create({
+    cart = await cartModel.create({
       createdBy: req.user.id,
       meals: [{ mealId, quantity }],
     });
-    return res.status(201).json({
-      status: "success",
-      message: "Cart created successfully",
-      result: newCart,
-    });
-  }
-  //update cart items
-  let matchmeal = false;
-  for (let index = 0; index < cart.meals.length; index++) {
-    if (cart.meals[index].mealId.toString() == mealId) {
-      cart.meals[index].quantity = quantity;
-      matchmeal = true;
-      break;
+  } else {
+    // Check if the meal already exists in the cart
+    const existingMeal = cart.meals.find((item) => item.mealId.toString() === mealId);
+
+    if (existingMeal) {
+      // If meal exists, increase the quantity
+      existingMeal.quantity += quantity;
+    } else {
+      // If meal doesn't exist, add it as a new item
+      cart.meals.push({ mealId, quantity });
     }
+
+    await cart.save();
   }
 
-  //push to cart
-  if (!matchmeal) {
-    cart.meals.push({ mealId, quantity });
-  }
-  await cart.save();
+  // Populate meal details before returning the response
+  cart = await cartModel.findById(cart._id).populate({
+    path: "meals.mealId",
+    select: "title finalPrice description image", // Select only the fields you need
+  });
+
   return res.status(201).json({
     status: "success",
-    message: "Cart created successfully",
+    message: "Cart updated successfully",
     result: cart,
   });
 });
+
 
 //====================================================================================================================//
 //clear cart
