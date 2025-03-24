@@ -7,6 +7,7 @@ import subcategoryModel from "../../../../DB/models/Subcategory.model.js";
 import mealModel from "../../../../DB/models/Meal.model.js";
 
 import { uploadToCloudinary } from "../../../utils/uploadHelper.js";
+import { ApiFeatures } from "../../../utils/apiFeatures.js";
 
 //add category
 export const addCategory = asyncHandler(async (req, res, next) => {
@@ -28,7 +29,6 @@ export const addCategory = asyncHandler(async (req, res, next) => {
     `${process.env.APP_NAME}/Category/${customId}`,
     `${customId}categoryImage`
   );
-  
 
   const categoryImagePublicId = `${process.env.APP_NAME}/Category/${customId}/${customId}categoryImage`;
   const category = await categoryModel.create({
@@ -114,7 +114,7 @@ export const getCategoriesWithMeals = asyncHandler(async (req, res, next) => {
 
 export const getCategoryWithMeals = asyncHandler(async (req, res, next) => {
   const categories = await categoryModel
-    .find({_id:req.params.categoryId}, "name imageURL status createdBy")
+    .find({ _id: req.params.categoryId }, "name imageURL status createdBy")
     .populate({
       path: "SubCategories",
       select: "_id", // Only need `_id` to use in another query
@@ -247,5 +247,39 @@ export const deleteCategory = asyncHandler(async (req, res, next) => {
     status: "success",
     message: "Category and its subcategories deleted successfully",
     deletedCategory: Category,
+  });
+});
+//====================================================================================================================//
+//get meals
+export const mealList = asyncHandler(async (req, res, next) => {
+  const apiObject = new ApiFeatures(
+    mealModel.find().populate([
+      {
+        path: "reviews",
+      },
+    ]),
+    req.query
+  )
+    .paginate()
+    .filter()
+    .search()
+    .sort()
+    .select();
+  const meals = await apiObject.mongooseQuery;
+  //  calc avg rating
+  for (let i = 0; i < meals.length; i++) {
+    let calcRate = 0;
+    for (let j = 0; j < meals[i].review?.length; j++) {
+      calcRate += meals[i].review[j].rating;
+    }
+    const meal = meals[i].toObject();
+    meal.avgRating = calcRate / meals[i].review?.length;
+    meals[i] = meal;
+  }
+  return res.status(200).json({
+    status: "success",
+    message: "Done",
+    count: meals.length,
+    result: meals,
   });
 });

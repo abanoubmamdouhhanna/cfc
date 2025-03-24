@@ -53,4 +53,8 @@ router.delete(
   categoryController.deleteCategory
 );
 
+//get meals
+router.get("/getAllMeals", categoryController.mealList);
+
+
 export default router;

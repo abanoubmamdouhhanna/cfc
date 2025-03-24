@@ -4,10 +4,13 @@ import { asyncHandler } from "../../../utils/errorHandling.js";
 
 //get cart
 export const getCart = asyncHandler(async (req, res, next) => {
-  const cart = await cartModel.findOne({ createdBy: req.user._id }).populate({
-    path: "meals.mealId",
-    select: "title finalPrice description image", // Select only the fields you need
-  }).lean()
+  const cart = await cartModel
+    .findOne({ createdBy: req.user._id })
+    .populate({
+      path: "meals.mealId",
+      select: "title finalPrice description image", // Select only the fields you need
+    })
+    .lean();
 
   return res.status(200).json({
     status: "success",
@@ -32,33 +35,39 @@ export const addToCart = asyncHandler(async (req, res, next) => {
       { _id: mealId },
       { $addToSet: { wishUser: req.user._id } }
     );
-    return next(new Error("You can't buy this meal at least right now", { cause: 400 }));
+    return next(
+      new Error("You can't buy this meal at least right now", { cause: 400 })
+    );
   }
 
   // Update or create the cart in one query
-  const cart = await cartModel.findOneAndUpdate(
-    { createdBy: req.user._id, "meals.mealId": mealId }, 
-    { 
-      $inc: { "meals.$.quantity": quantity } // Increase quantity if meal exists
-    },
-    { new: true }
-  ).populate({
-    path: "meals.mealId",
-    select: "title finalPrice description image",
-  });
-
-  if (!cart) {
-    // If cart or meal doesn't exist in cart, create/update it
-    const newCart = await cartModel.findOneAndUpdate(
-      { createdBy: req.user._id },
+  const cart = await cartModel
+    .findOneAndUpdate(
+      { createdBy: req.user._id, "meals.mealId": mealId },
       {
-        $push: { meals: { mealId, quantity } } // Add new meal
+        $inc: { "meals.$.quantity": quantity }, // Increase quantity if meal exists
       },
-      { new: true, upsert: true } // Create cart if not exists
-    ).populate({
+      { new: true }
+    )
+    .populate({
       path: "meals.mealId",
       select: "title finalPrice description image",
     });
+
+  if (!cart) {
+    // If cart or meal doesn't exist in cart, create/update it
+    const newCart = await cartModel
+      .findOneAndUpdate(
+        { createdBy: req.user._id },
+        {
+          $push: { meals: { mealId, quantity } }, // Add new meal
+        },
+        { new: true, upsert: true } // Create cart if not exists
+      )
+      .populate({
+        path: "meals.mealId",
+        select: "title finalPrice description image",
+      });
 
     return res.status(201).json({
       status: "success",
@@ -73,7 +82,6 @@ export const addToCart = asyncHandler(async (req, res, next) => {
     result: cart,
   });
 });
-
 
 //====================================================================================================================//
 //clear cart

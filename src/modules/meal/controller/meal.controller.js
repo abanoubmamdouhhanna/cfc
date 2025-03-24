@@ -8,39 +8,6 @@ import userModel from "../../../../DB/models/User.model.js";
 import { ApiFeatures } from "../../../utils/apiFeatures.js";
 import { uploadToCloudinary } from "../../../utils/uploadHelper.js";
 
-//get meals
-export const mealList = asyncHandler(async (req, res, next) => {
-  const apiObject = new ApiFeatures(
-    mealModel.find().populate([
-      {
-        path: "review",
-      },
-    ]),
-    req.query
-  )
-    .paginate()
-    .filter()
-    .search()
-    .sort()
-    .select();
-  const meals = await apiObject.mongooseQuery;
-  //  calc avg rating
-  for (let i = 0; i < meals.length; i++) {
-    let calcRate = 0;
-    for (let j = 0; j < meals[i].review?.length; j++) {
-      calcRate += meals[i].review[j].rating;
-    }
-    const meal = meals[i].toObject();
-    meal.avgRating = calcRate / meals[i].review?.length;
-    meals[i] = meal;
-  }
-  return res.status(200).json({
-    status: "success",
-    message: "Done",
-    result: meals,
-  });
-});
-//====================================================================================================================//
 //create meal
 export const addMeal = asyncHandler(async (req, res, next) => {
   const { title,description, price, discount, flavor, size } = req.body;

@@ -12,9 +12,6 @@ import { isValid } from "../../middlewares/validation.middleware.js";
 import { auth } from "../../middlewares/auth.middleware.js";
 const router = Router({ mergeParams: true });
 
-//get meals
-router.get("/", mealController.mealList);
-
 //add meal
 router.post(
   "/addMeal",
