@@ -20,49 +20,52 @@ export const getCart = asyncHandler(async (req, res, next) => {
 
 export const addToCart = asyncHandler(async (req, res, next) => {
   const { mealId, quantity } = req.body;
+
+  // Find the meal once
   const meal = await mealModel.findById(mealId);
   if (!meal) {
     return next(new Error("Invalid meal Id", { cause: 400 }));
   }
 
-  if (meal.status == "not available" || meal.isDeleted) {
+  if (meal.status === "not available" || meal.isDeleted) {
     await mealModel.updateOne(
       { _id: mealId },
       { $addToSet: { wishUser: req.user._id } }
     );
-    return next(
-      new Error("You can't buy this meal at least right now", { cause: 400 })
-    );
+    return next(new Error("You can't buy this meal at least right now", { cause: 400 }));
   }
 
-  let cart = await cartModel.findOne({ createdBy: req.user._id });
-
-  // If cart doesn't exist, create a new one
-  if (!cart) {
-    cart = await cartModel.create({
-      createdBy: req.user.id,
-      meals: [{ mealId, quantity }],
-    });
-  } else {
-    // Check if the meal already exists in the cart
-    const existingMeal = cart.meals.find((item) => item.mealId.toString() === mealId);
-
-    if (existingMeal) {
-      // If meal exists, increase the quantity
-      existingMeal.quantity += quantity;
-    } else {
-      // If meal doesn't exist, add it as a new item
-      cart.meals.push({ mealId, quantity });
-    }
-
-    await cart.save();
-  }
-
-  // Populate meal details before returning the response
-  cart = await cartModel.findById(cart._id).populate({
+  // Update or create the cart in one query
+  const cart = await cartModel.findOneAndUpdate(
+    { createdBy: req.user._id, "meals.mealId": mealId }, 
+    { 
+      $inc: { "meals.$.quantity": quantity } // Increase quantity if meal exists
+    },
+    { new: true }
+  ).populate({
     path: "meals.mealId",
-    select: "title finalPrice description image", // Select only the fields you need
+    select: "title finalPrice description image",
   });
+
+  if (!cart) {
+    // If cart or meal doesn't exist in cart, create/update it
+    const newCart = await cartModel.findOneAndUpdate(
+      { createdBy: req.user._id },
+      {
+        $push: { meals: { mealId, quantity } } // Add new meal
+      },
+      { new: true, upsert: true } // Create cart if not exists
+    ).populate({
+      path: "meals.mealId",
+      select: "title finalPrice description image",
+    });
+
+    return res.status(201).json({
+      status: "success",
+      message: "Cart updated successfully",
+      result: newCart,
+    });
+  }
 
   return res.status(201).json({
     status: "success",
