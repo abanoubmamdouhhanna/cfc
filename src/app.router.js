@@ -18,6 +18,7 @@ import orderRouter from "./modules/order/order.router.js";
 import cartRouter from "./modules/cart/cart.router.js";
 import couponRouter from "./modules/coupon/coupon.router.js"
 import paymentRouter from "./utils/paymentRouter.js";
+import wishlistRouter from './modules/wishlist/wishlist.router.js'
 
 const initApp = (app, express) => {
   app.use(express.json({}));
@@ -40,6 +41,8 @@ const initApp = (app, express) => {
   app.use("/order", orderRouter);
   app.use("/cart", cartRouter);
   app.use("/coupon",couponRouter)
+  app.use("/wishlist",wishlistRouter)
+
 
 
   app.use("/payment", paymentRouter);

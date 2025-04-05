@@ -165,36 +165,6 @@ export const updateMeal = asyncHandler(async (req, res, next) => {
   });
 });
 //====================================================================================================================//
-//wishlist
-
-export const wishlist = asyncHandler(async (req, res, next) => {
-  const { mealId } = req.params;
-  if (!(await mealModel.findOne({ _id: mealId, isDeleted: false }))) {
-    return next(new Error("In-valid meal", { cause: 400 }));
-  }
-  await userModel.updateOne(
-    { _id: req.user._id },
-    { $addToSet: { wishlist: mealId } }
-  );
-  return res
-    .status(200)
-    .json({ status: "success", message: "Added to wishlist" });
-});
-//====================================================================================================================//
-//remove From Wishlist
-
-export const removeFromWishlist = asyncHandler(async (req, res, next) => {
-  const { mealId } = req.params;
-
-  await userModel.updateOne(
-    { _id: req.user._id },
-    { $pull: { wishlist: mealId } }
-  );
-  return res
-    .status(200)
-    .json({ status: "success", message: "removed from wishlist" });
-});
-//====================================================================================================================//
 //delete meal
 
 export const deleteMeal = asyncHandler(async (req, res, next) => {

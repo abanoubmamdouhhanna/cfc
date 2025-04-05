@@ -45,13 +45,6 @@ export const updateMealSchema = joi
     'object.min': 'At least one field must be provided for update'
   });
 
-export const wishlistSchema = joi
-  .object({
-    mealId: generalFeilds.id,
-    categoryId: generalFeilds.id,
-    subcategoryId: generalFeilds.id,
-  })
-  .required();
 
 export const deleteMealSchema = joi
   .object({
