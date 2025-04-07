@@ -7,10 +7,11 @@ const mealSchema = new Schema(
     image: { type: String, required: true },
     title: { type: String, required: true, trim: true },
     description: { type: String },
-    flavor: [String],
     price: { type: Number, required: true, default: 1 },
+    compoPrice: { type: Number, default: 1 },
     discount: { type: Number, default: 0 },
     finalPrice: { type: Number, required: true, default: 1 },
+    finalComboPrice: { type: Number, required: true, default: 1 },
     size: [String],
     wishUser: [{ type: Types.ObjectId, ref: "User" }],
     status: {

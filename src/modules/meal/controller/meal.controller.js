@@ -4,14 +4,21 @@ import cloudinary from "../../../utils/cloudinary.js";
 import { nanoid } from "nanoid";
 import mealModel from "../../../../DB/models/Meal.model.js";
 import { asyncHandler } from "../../../utils/errorHandling.js";
-import userModel from "../../../../DB/models/User.model.js";
-import { ApiFeatures } from "../../../utils/apiFeatures.js";
 import { uploadToCloudinary } from "../../../utils/uploadHelper.js";
 
 //create meal
 export const addMeal = asyncHandler(async (req, res, next) => {
-  const { title,description, price, discount, flavor, size } = req.body;
+  const {
+    title,
+    description,
+    price,
+    compoPrice,
+    discount = 0,
+    size,
+  } = req.body;
   const { categoryId, subcategoryId } = req.params;
+
+  // Validate subcategory
   const subCat = await subcategoryModel.findOne({
     _id: subcategoryId,
     categoryId,
@@ -24,11 +31,20 @@ export const addMeal = asyncHandler(async (req, res, next) => {
 
   const customId = `${title}_${nanoid()}`;
   const slug = slugify(title);
-  const finalPrice = Number.parseFloat(
-    price - price * ((discount || 0) / 100)
+
+  // Parse prices
+  const basePrice = parseFloat(price);
+  const baseCompoPrice = compoPrice ? parseFloat(compoPrice) : null;
+
+  // Calculate finalPrice based on whether compoPrice is present
+  const finalComboPrice = (
+    baseCompoPrice -
+    baseCompoPrice * (discount / 100)
   ).toFixed(2);
 
+  const finalPrice = (basePrice - basePrice * (discount / 100)).toFixed(2);
 
+  // Upload meal image
   const mealImage = await uploadToCloudinary(
     req.file,
     `${process.env.APP_NAME}/Meal/${customId}`,
@@ -36,15 +52,18 @@ export const addMeal = asyncHandler(async (req, res, next) => {
   );
 
   const mainMealImagePublicId = `${process.env.APP_NAME}/Meal/${customId}/${customId}mainMealImage`;
+
+  // Create meal data
   const mealData = {
     title,
     description,
-    price,
+    price: basePrice,
+    compoPrice: baseCompoPrice,
     discount,
     customId,
     slug,
     finalPrice,
-    flavor,
+    finalComboPrice,
     size,
     image: mealImage,
     categoryId,
@@ -52,6 +71,7 @@ export const addMeal = asyncHandler(async (req, res, next) => {
     createdBy: req.user._id,
     mainMealImagePublicId,
   };
+
   const meal = await mealModel.create(mealData);
 
   return res.status(201).json({
@@ -60,6 +80,7 @@ export const addMeal = asyncHandler(async (req, res, next) => {
     result: meal,
   });
 });
+
 //====================================================================================================================//
 //update meal
 
@@ -68,8 +89,8 @@ export const updateMeal = asyncHandler(async (req, res, next) => {
   const {
     title,
     description,
-    flavor,
     price,
+    compoPrice,
     discount,
     size,
     categoryId,
@@ -79,91 +100,103 @@ export const updateMeal = asyncHandler(async (req, res, next) => {
 
   const meal = await mealModel.findById(mealId);
   if (!meal) {
-    return next(new Error("In-valid meal Id", { cause: 400 }));
+    return next(new Error("Invalid meal ID", { cause: 400 }));
   }
-  if (
-    !(
-      title ||
-      description ||
-      price ||
-      discount ||
-      categoryId ||
-      subcategoryId ||
-      status ||
-      (Array.isArray(flavor) && flavor.length > 0) ||
-      (Array.isArray(size) && size.length > 0) ||
-      (req.files && req.files.mealImage && req.files.mealImage.length > 0)
-    )
-  ) {
-    return next(new Error("We need information to update", { cause: 400 }));
-  }
-  if (
+
+  const hasUpdatableData =
     title ||
     description ||
     price ||
+    compoPrice ||
     discount ||
     categoryId ||
     subcategoryId ||
-    status
-  ) {
-    const object = { ...req.body };
-    for (let key in object) {
-      if (meal[key] == object[key]) {
-        return next(
-          new Error(
-            `Cannot update ${key} with the same value. Please provide a different value.`,
-            { cause: 400 }
-          )
-        );
-      }
-    }
+    status ||
+    (Array.isArray(size) && size.length > 0) ||
+    (req.files && req.files.mealImage && req.files.mealImage.length > 0);
+
+  if (!hasUpdatableData) {
+    return next(new Error("We need information to update", { cause: 400 }));
   }
 
-  if (subcategoryId && categoryId) {
-    if (!(await subcategoryModel.findOne({ _id: subcategoryId, categoryId }))) {
+  // Check for redundant values
+  const checkFields = {
+    title,
+    description,
+    price,
+    compoPrice,
+    discount,
+    categoryId,
+    subcategoryId,
+    status,
+  };
+  for (let key in checkFields) {
+    if (checkFields[key] !== undefined && meal[key] == checkFields[key]) {
       return next(
-        new Error("In-valid subcategoryId or categoryId", { cause: 400 })
+        new Error(
+          `Cannot update ${key} with the same value. Please provide a different value.`,
+          { cause: 400 }
+        )
       );
     }
   }
 
-  //update title
+  // Validate subcategory/category combo
+  if (subcategoryId && categoryId) {
+    const isValidSubCat = await subcategoryModel.findOne({
+      _id: subcategoryId,
+      categoryId,
+    });
+    if (!isValidSubCat) {
+      return next(
+        new Error("Invalid subcategoryId or categoryId", { cause: 400 })
+      );
+    }
+  }
+
+  // Update slug if title changed
   if (title) {
     req.body.slug = slugify(title);
   }
 
-  //update price or discount
-  req.body.finalPrice =
-    price || discount
-      ? Number.parseFloat(
-          (price || meal.price) -
-            (price || meal.price) * ((discount || meal.discount) / 100)
-        ).toFixed(2)
-      : meal.finalPrice;
+  // Final price calculation logic based on compoPrice presence
+  const basePrice =
+    compoPrice !== undefined
+      ? parseFloat(compoPrice)
+      : price !== undefined
+      ? parseFloat(price)
+      : compoPrice !== undefined
+      ? parseFloat(meal.compoPrice)
+      : parseFloat(meal.price);
 
-  //update image
+  const discountValue = discount !== undefined ? discount : meal.discount;
+  req.body.finalPrice = (basePrice - basePrice * (discountValue / 100)).toFixed(
+    2
+  );
+
+  // Update meal image
   if (req.files?.mealImage?.length) {
     const mealImage = await uploadToCloudinary(
       req.file,
       `${process.env.APP_NAME}/Meal/${meal.customId}`,
       `${meal.customId}mainMealImage`
     );
-
     req.body.image = mealImage;
   }
 
   req.body.updatedBy = req.user._id;
-  const mealUpdated = await mealModel.findByIdAndUpdate(
-    { _id: mealId },
-    req.body,
-    { new: true }
-  );
+
+  const mealUpdated = await mealModel.findByIdAndUpdate(mealId, req.body, {
+    new: true,
+  });
+
   return res.status(200).json({
     status: "success",
-    message: "meal updated successfully",
+    message: "Meal updated successfully",
     result: mealUpdated,
   });
 });
+
 //====================================================================================================================//
 //delete meal
 

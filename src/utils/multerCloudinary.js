@@ -21,6 +21,9 @@ export const allowedTypesMap = (() => {
     processImage: imageTypes,
     memberImage: imageTypes,
     couponImage:imageTypes,
+    drinkOptionImage:imageTypes,
+    sauceOptionImage:imageTypes,
+    sideOptionImage:imageTypes,
     resume: documentTypes,
   };
 })();

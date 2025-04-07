@@ -1,4 +1,4 @@
-import cookieParser from "cookie-parser"
+import cookieParser from "cookie-parser";
 import connectDB from "../DB/connection.js";
 import { glopalErrHandling } from "./utils/errorHandling.js";
 import authRouter from "./modules/auth/auth.router.js";
@@ -16,14 +16,16 @@ import teamRouter from "./modules/team/team.router.js";
 import reviewRouter from "./modules/reviews/reviews.router.js";
 import orderRouter from "./modules/order/order.router.js";
 import cartRouter from "./modules/cart/cart.router.js";
-import couponRouter from "./modules/coupon/coupon.router.js"
+import couponRouter from "./modules/coupon/coupon.router.js";
 import paymentRouter from "./utils/paymentRouter.js";
-import wishlistRouter from './modules/wishlist/wishlist.router.js'
+import wishlistRouter from "./modules/wishlist/wishlist.router.js";
+import sideRouter from "./modules/option/side.router.js";
+import drinkRouter from "./modules/option/drink.router.js";
+import sauceRouter from "./modules/option/sauce.router.js";
 
 const initApp = (app, express) => {
   app.use(express.json({}));
-  app.use(cookieParser()) 
-
+  app.use(cookieParser());
 
   app.use("/auth", authRouter);
   app.use("/user", userRouter);
@@ -40,15 +42,13 @@ const initApp = (app, express) => {
   app.use("/review", reviewRouter);
   app.use("/order", orderRouter);
   app.use("/cart", cartRouter);
-  app.use("/coupon",couponRouter)
-  app.use("/wishlist",wishlistRouter)
-
-
+  app.use("/coupon", couponRouter);
+  app.use("/wishlist", wishlistRouter);
+  app.use("/side", sideRouter);
+  app.use("/drink", drinkRouter);
+  app.use("/sauce", sauceRouter);
 
   app.use("/payment", paymentRouter);
-
-
-
 
   app.all("*", (req, res, next) => {
     return next(new Error("error 404 in-valid routing", { cause: 404 }));
