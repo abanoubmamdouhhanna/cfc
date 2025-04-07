@@ -72,7 +72,7 @@ export const createOrder = asyncHandler(async (req, res, next) => {
       )
     );
   }
-   if (date < new Date().setHours(0, 0, 0, 0)) {
+  if (date < new Date().setHours(0, 0, 0, 0)) {
     return next(
       new Error("order date must be today or in the future.", {
         cause: 400,
@@ -114,14 +114,14 @@ export const createOrder = asyncHandler(async (req, res, next) => {
   }
 
   let meals = reqMeals || [];
+  let isCart = false; // Flag to track if meals came from the cart
   if (!meals.length) {
     const cart = await cartModel.findOne({ createdBy: req.user._id }).lean();
     if (!cart || !cart.meals.length)
       return next(new Error("Empty cart", { cause: 400 }));
     meals = cart.meals;
-    req.body.isCart = true;
+    isCart = true;
   }
-
 
   // --- Start: Process Meals & Calculate Total Price (MODIFIED SECTION) ---
   let sumTotal = 0; // Will include base meal prices + paid extras
@@ -131,109 +131,126 @@ export const createOrder = asyncHandler(async (req, res, next) => {
   for (const meal of meals) {
     const checkMeal = await mealModel.findById(meal.mealId).lean();
     if (!checkMeal || checkMeal.isDeleted)
-      return next(new Error(`Invalid meal in order: ${meal.mealId}`, { cause: 400 }));
+      return next(
+        new Error(`Invalid meal in order: ${meal.mealId}`, { cause: 400 })
+      );
 
     mealIds.push(meal.mealId);
 
-    let mealBasePrice =meal.isCombo?checkMeal.finalComboPrice * meal.quantity: checkMeal.finalPrice * meal.quantity;
+    let mealBasePrice = meal.isCombo
+      ? checkMeal.finalComboPrice * meal.quantity
+      : checkMeal.finalPrice * meal.quantity;
     let extrasPrice = 0; // Price ONLY for PAID extras (second sauce/drink/side onwards)
     const processedSauces = [];
     const processedDrinks = [];
     const processedSides = [];
+    const freeSaucesCount = meal.quantity;
+    const freeDrinksCount = meal.quantity;
+    const freeSidesCount = meal.quantity;
 
     // --- Process Sauces ---
     if (meal.sauces && Array.isArray(meal.sauces)) {
-        for (const sauce of meal.sauces) {
-            if (!sauce || typeof sauce !== 'object' || !sauce.id) {
-                 console.warn(`Invalid sauce structure received for meal ${checkMeal.title}:`, sauce);
-                continue;
-            }
-            const sauceDetail = await sauceOptionModel.findById(sauce.id).lean();
-            if (!sauceDetail || !sauceDetail.isAvailable) {
-                console.warn(`Sauce option ${sauce.id} not found or unavailable for meal ${checkMeal.title}`);
-                continue;
-            }
-
-            let saucePrice = sauceDetail.price; // Start with the actual price
-
-            // ** NEW LOGIC: First sauce is always free **
-            if (processedSauces.length === 0) {
-                saucePrice = 0; // Make the first one free
-            } else {
-                // It's not the first sauce, add its price to the running total for PAID extras
-                extrasPrice += saucePrice;
-            }
-
-            processedSauces.push({
-                sauceId: sauceDetail._id,
-                name: sauceDetail.name,
-                price: saucePrice, // Store the price charged (0 for first, actual price otherwise)
-            });
+      for (const [index, sauce] of meal.sauces.entries()) {
+        if (!sauce || typeof sauce !== "object" || !sauce.id) {
+          console.warn(
+            `Invalid sauce structure received for meal ${checkMeal.title}:`,
+            sauce
+          );
+          continue;
         }
+        const sauceDetail = await sauceOptionModel.findById(sauce.id).lean();
+        if (!sauceDetail || !sauceDetail.isAvailable) {
+          console.warn(
+            `Sauce option ${sauce.id} not found or unavailable for meal ${checkMeal.title}`
+          );
+          continue;
+        }
+
+        let saucePrice = sauceDetail.price; // Start with the actual price
+
+        // ** NEW LOGIC:  Free sauces up to meal quantity **
+        if (index < freeSaucesCount) {
+          saucePrice = 0; // Make it free
+        } else {
+          extrasPrice += saucePrice; // Charge for extra sauces
+        }
+
+        processedSauces.push({
+          sauceId: sauceDetail._id,
+          name: sauceDetail.name,
+          price: saucePrice, // Store the price charged
+        });
+      }
     }
 
     // --- Process Drinks ---
     if (meal.drinks && Array.isArray(meal.drinks)) {
-        for (const drink of meal.drinks) {
-             if (!drink || typeof drink !== 'object' || !drink.id) {
-                 console.warn(`Invalid drink structure received for meal ${checkMeal.title}:`, drink);
-                continue;
-            }
-            const drinkDetail = await drinkOptionModel.findById(drink.id).lean();
-            if (!drinkDetail || !drinkDetail.isAvailable) {
-                 console.warn(`Drink option ${drink.id} not found or unavailable for meal ${checkMeal.title}`);
-                continue;
-            }
-
-            let drinkPrice = drinkDetail.price; // Start with the actual price
-
-            // ** NEW LOGIC: First drink is always free **
-             if (processedDrinks.length === 0) {
-                drinkPrice = 0; // Make the first one free
-            } else {
-                 // It's not the first drink, add its price to the running total for PAID extras
-                extrasPrice += drinkPrice;
-            }
-
-            processedDrinks.push({
-                drinkId: drinkDetail._id,
-                name: drinkDetail.name,
-                price: drinkPrice, // Store the price charged (0 for first, actual price otherwise)
-            });
+      for (const [index, drink] of meal.drinks.entries()) {
+        if (!drink || typeof drink !== "object" || !drink.id) {
+          console.warn(
+            `Invalid drink structure received for meal ${checkMeal.title}:`,
+            drink
+          );
+          continue;
         }
+        const drinkDetail = await drinkOptionModel.findById(drink.id).lean();
+        if (!drinkDetail || !drinkDetail.isAvailable) {
+          console.warn(
+            `Drink option ${drink.id} not found or unavailable for meal ${checkMeal.title}`
+          );
+          continue;
+        }
+
+        let drinkPrice = drinkDetail.price; // Start with the actual price
+
+        // ** NEW LOGIC: Free drinks up to meal quantity **
+        if (index < freeDrinksCount) {
+          drinkPrice = 0;
+        } else {
+          extrasPrice += drinkPrice;
+        }
+
+        processedDrinks.push({
+          drinkId: drinkDetail._id,
+          name: drinkDetail.name,
+          price: drinkPrice,
+        });
+      }
     }
 
     // --- Process Sides ---
     if (meal.sides && Array.isArray(meal.sides)) {
-        for (const side of meal.sides) {
-             if (!side || typeof side !== 'object' || !side.id) {
-                console.warn(`Invalid side structure received for meal ${checkMeal.title}:`, side);
-                continue;
-            }
-            const sideDetail = await sideOptionModel.findById(side.id).lean();
-            if (!sideDetail || !sideDetail.isAvailable) {
-                 console.warn(`Side option ${side.id} not found or unavailable for meal ${checkMeal.title}`);
-                continue;
-            }
-
-            let sidePrice = sideDetail.price; // Start with the actual price
-
-             // ** NEW LOGIC: First side is always free **
-            if (processedSides.length === 0) {
-                sidePrice = 0; // Make the first one free
-            } else {
-                // It's not the first side, add its price to the running total for PAID extras
-                extrasPrice += sidePrice;
-            }
-
-            processedSides.push({
-                sideId: sideDetail._id,
-                name: sideDetail.name,
-                price: sidePrice, // Store the price charged (0 for first, actual price otherwise)
-            });
+      for (const [index, side] of meal.sides.entries()) {
+        if (!side || typeof side !== "object" || !side.id) {
+          console.warn(
+            `Invalid side structure received for meal ${checkMeal.title}:`,
+            side
+          );
+          continue;
         }
-    }
+        const sideDetail = await sideOptionModel.findById(side.id).lean();
+        if (!sideDetail || !sideDetail.isAvailable) {
+          console.warn(
+            `Side option ${side.id} not found or unavailable for meal ${checkMeal.title}`
+          );
+          continue;
+        }
 
+        let sidePrice = sideDetail.price; // Start with the actual price
+        // ** NEW LOGIC: Free sides up to meal quantity **
+        if (index < freeSidesCount) {
+          sidePrice = 0;
+        } else {
+          extrasPrice += sidePrice;
+        }
+
+        processedSides.push({
+          sideId: sideDetail._id,
+          name: sideDetail.name,
+          price: sidePrice,
+        });
+      }
+    }
 
     // Calculate final price for this meal item (base + PAID extras)
     const finalMealItemPrice = mealBasePrice + extrasPrice;
@@ -241,13 +258,15 @@ export const createOrder = asyncHandler(async (req, res, next) => {
     finalMealList.push({
       mealId: meal.mealId,
       title: checkMeal.title,
-      unitPrice: meal.isCombo?checkMeal.finalComboPrice:checkMeal.finalPrice,
+      unitPrice: meal.isCombo
+        ? checkMeal.finalComboPrice
+        : checkMeal.finalPrice,
       description: checkMeal.description,
       quantity: meal.quantity,
-      isCombo: checkMeal.isCombo || false, 
-      sauces: processedSauces, 
-      drinks: processedDrinks, 
-      sides: processedSides,   
+      isCombo: checkMeal.isCombo || false,
+      sauces: processedSauces,
+      drinks: processedDrinks,
+      sides: processedSides,
       finalPrice: finalMealItemPrice, // Base price + only PAID extras
     });
 
@@ -255,61 +274,58 @@ export const createOrder = asyncHandler(async (req, res, next) => {
   }
   // --- End: Process Meals ---
 
-
   // --- Calculations (Discount, Tax, TotalPrice) ---
   const discount = coupon ? (sumTotal * coupon.amount) / 100 : 0;
   const finalPrice = parseFloat((sumTotal - discount).toFixed(2));
   const tax = parseFloat((finalPrice * (location.taxRate / 100)).toFixed(2));
   const totalPrice = parseFloat((finalPrice + tax).toFixed(2));
 
-
   // --- Create Order ---
   // Order creation remains the same, saving finalMealList which has the correct prices.
-   const customId = nanoid();
-   const order = await orderModel.create({
-       locationId,
-       userId: req.user._id,
-       address,
-       city,
-       state,
-       phone,
-       meals: finalMealList,
-       couponId: coupon?._id,
-       discount,
-       finalPrice,
-       tax,
-       totalPrice,
-       paymentType,
-       orderTime,
-       orderDate,
-       customId,
-       status: "Pending",
-       paymentStatus: "pending",
-   });
+  const customId = nanoid();
+  const order = await orderModel.create({
+    locationId,
+    userId: req.user._id,
+    address,
+    city,
+    state,
+    phone,
+    meals: finalMealList,
+    couponId: coupon?._id,
+    discount,
+    finalPrice,
+    tax,
+    totalPrice,
+    paymentType,
+    orderTime,
+    orderDate,
+    customId,
+    status: "Pending",
+    paymentStatus: "pending",
+  });
 
-   if (!order) return next(new Error("Failed to place order", { cause: 500 }));
-
+  if (!order) return next(new Error("Failed to place order", { cause: 500 }));
 
   // --- Post-Order Actions (Coupon, Cart Clearing) ---
   // Remain the same.
-   if (coupon) {
-       couponModel
-           .updateOne({ _id: coupon._id }, { $addToSet: { usedBy: req.user._id } })
-           .exec();
-   }
-   req.body.isCart
-       ? clearAllCartItems(req.user._id)
-       : clearSelectedItems(mealIds, req.user._id);
-
+  if (coupon) {
+    couponModel
+      .updateOne({ _id: coupon._id }, { $addToSet: { usedBy: req.user._id } })
+      .exec();
+  }
+  //clear cart
+  if (isCart) {
+    clearAllCartItems(req.user._id);
+  }
 
   // --- Prepare Response ---
   // Remains the same.
-    let response = {
-        status: "success",
-        message: "Order placed successfully. Proceed to payment if applicable.",
-        orderId: order._id,
-        order: order.toObject(),
-    };
+  let response = {
+    status: "success",
+    message: "Order placed successfully. Proceed to payment if applicable.",
+    orderId: order._id,
+    order: order.toObject(),
+  };
 
   // --- Payment Handling (Stripe, Wallet, PayPal) ---
   // The payment handling logic should also remain the same.
@@ -319,164 +335,191 @@ export const createOrder = asyncHandler(async (req, res, next) => {
   // Wallet uses `order.totalPrice`.
 
   // ** Card (Stripe) Payment **
-   if (paymentType === "Card") {
-       const stripe = new Stripe(process.env.STRIPE_KEY);
-       let stripeCouponId = null;
-       let stripeDiscountAmount = 0;
-        if (coupon) {
-           stripeDiscountAmount = Math.round(discount * 100);
-            try {
-               const stripeCoupon = await stripe.coupons.create({
-                   amount_off: stripeDiscountAmount,
-                   currency: "USD",
-                   duration: "once",
-                   name: `Order Discount (${coupon.amount}%)`
-               });
-               stripeCouponId = stripeCoupon.id;
-           } catch (couponError) {
-               console.error("Failed to create Stripe coupon:", couponError);
-           }
-       }
+  if (paymentType === "Card") {
+    const stripe = new Stripe(process.env.STRIPE_KEY);
+    let stripeCouponId = null;
+    let stripeDiscountAmount = 0;
+    if (coupon) {
+      stripeDiscountAmount = Math.round(discount * 100);
+      try {
+        const stripeCoupon = await stripe.coupons.create({
+          amount_off: stripeDiscountAmount,
+          currency: "USD",
+          duration: "once",
+          name: `Order Discount (${coupon.amount}%)`,
+        });
+        stripeCouponId = stripeCoupon.id;
+      } catch (couponError) {
+        console.error("Failed to create Stripe coupon:", couponError);
+      }
+    }
 
-       const line_items = [];
-        order.meals.forEach(mealItem => {
-           // Calculate total cents for the line item FOR STRIPE
-           // Base meal price * quantity
-           let itemTotalCents = Math.round(mealItem.unitPrice * mealItem.quantity * 100);
-           // Add cost of PAID extras only
-           mealItem.sauces.forEach(s => { if (s.price > 0) itemTotalCents += Math.round(s.price * 100); });
-           mealItem.drinks.forEach(d => { if (d.price > 0) itemTotalCents += Math.round(d.price * 100); });
-           mealItem.sides.forEach(s => { if (s.price > 0) itemTotalCents += Math.round(s.price * 100); });
+    const line_items = [];
+    order.meals.forEach((mealItem) => {
+      // Calculate total cents for the line item FOR STRIPE
+      // Base meal price * quantity
+      let itemTotalCents = Math.round(
+        mealItem.unitPrice * mealItem.quantity * 100
+      );
+      // Add cost of PAID extras only
+      mealItem.sauces.forEach((s) => {
+        if (s.price > 0) itemTotalCents += Math.round(s.price * 100);
+      });
+      mealItem.drinks.forEach((d) => {
+        if (d.price > 0) itemTotalCents += Math.round(s.price * 100);
+      });
+      mealItem.sides.forEach((s) => {
+        if (s.price > 0) itemTotalCents += Math.round(s.price * 100);
+      });
 
+      line_items.push({
+        price_data: {
+          currency: "USD",
+          product_data: {
+            name:
+              `${mealItem.title} (Qty: ${mealItem.quantity})` +
+              (mealItem.isCombo ? " [Combo]" : ""),
+            description: `Includes selected sauces, drinks, and sides (first ${mealItem.quantity} of each type are free).`, // Updated description
+          },
+          // IMPORTANT: Stripe's unit_amount should represent the final calculated price for the line
+          // including paid extras, consistent with `mealItem.finalPrice`
+          // The previous calculation `mealItemTotalCents` was slightly off. Let's use the saved finalPrice.
+          unit_amount: Math.round(mealItem.finalPrice * 100), // Use the calculated finalPrice for the item
+        },
+        quantity: 1, // Quantity is 1 because unit_amount reflects the total for the line (incl. meal quantity)
+      });
+    });
 
-            line_items.push({
-               price_data: {
-                   currency: "USD",
-                   product_data: {
-                       name: `${mealItem.title} (Qty: ${mealItem.quantity})` + (mealItem.isCombo ? ' [Combo]' : ''),
-                       description: `Includes selected sauces, drinks, and sides (first of each type may be free).` // Updated description
-                   },
-                    // IMPORTANT: Stripe's unit_amount should represent the final calculated price for the line
-                    // including paid extras, consistent with `mealItem.finalPrice`
-                    // The previous calculation `mealItemTotalCents` was slightly off. Let's use the saved finalPrice.
-                   unit_amount: Math.round(mealItem.finalPrice * 100), // Use the calculated finalPrice for the item
-               },
-               quantity: 1, // Quantity is 1 because unit_amount reflects the total for the line (incl. meal quantity)
-           });
-       });
+    if (order.tax > 0) {
+      line_items.push({
+        price_data: {
+          currency: "USD",
+          product_data: { name: "Tax" },
+          unit_amount: Math.round(order.tax * 100),
+        },
+        quantity: 1,
+      });
+    }
 
-       if (order.tax > 0) {
-           line_items.push({
-               price_data: {
-                   currency: "USD",
-                   product_data: { name: "Tax" },
-                   unit_amount: Math.round(order.tax * 100),
-               },
-               quantity: 1,
-           });
-       }
+    try {
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        mode: "payment",
+        cancel_url: `${req.protocol}://${
+          req.headers.host
+        }/order/stripePayment/cancel?orderId=${order._id.toString()}`,
+        success_url: `${req.protocol}://${
+          req.headers.host
+        }/order/stripePayment/success?orderId=${order._id.toString()}&session_id={CHECKOUT_SESSION_ID}`,
+        customer_email: req.user.email,
+        metadata: { orderId: order._id.toString() },
+        line_items: line_items,
+        discounts: stripeCouponId ? [{ coupon: stripeCouponId }] : [],
+      });
 
-       try {
-           const session = await stripe.checkout.sessions.create({
-               payment_method_types: ["card"],
-               mode: "payment",
-               cancel_url: `${req.protocol}://${req.headers.host}/order/stripePayment/cancel?orderId=${order._id.toString()}`,
-               success_url: `${req.protocol}://${req.headers.host}/order/stripePayment/success?orderId=${order._id.toString()}&session_id={CHECKOUT_SESSION_ID}`,
-               customer_email: req.user.email,
-               metadata: { orderId: order._id.toString() },
-               line_items: line_items,
-               discounts: stripeCouponId ? [{ coupon: stripeCouponId }] : [],
-           });
-
-           order.stripeSessionurl = session.url;
-           await order.save();
-           response.paymentUrl = session.url;
-
-       } catch (stripeError) {
-           console.error("Stripe session creation failed:", stripeError);
-           return next(new Error("Payment session creation failed. Please try again.", { cause: 500 }));
-       }
-   }
+      order.stripeSessionurl = session.url;
+      await order.save();
+      response.paymentUrl = session.url;
+    } catch (stripeError) {
+      console.error("Stripe session creation failed:", stripeError);
+      return next(
+        new Error("Payment session creation failed. Please try again.", {
+          cause: 500,
+        })
+      );
+    }
+  }
 
   // ** Wallet Payment **
-   if (paymentType === "Wallet") {
-       try {
-           await payWithEwallet(req.user._id, order.totalPrice);
-           processInvoice(order, req.user);
-           order.status = "Processing";
-           order.paymentStatus = "paid";
-           await order.save();
-           response.message = "Order placed and paid successfully with your CFC wallet. It's being prepared!";
-           const io = req.app.get("io");
-           if (io) {
-                sendOrderNotification(io, order.toObject());
-           } else {
-               console.warn("Socket.IO instance not found, cannot send real-time order notification.");
-           }
-       } catch (walletError) {
-           return next(new Error(walletError.message || "Wallet payment failed.", { cause: 400 }));
-       }
-   }
+  if (paymentType === "Wallet") {
+    try {
+      await payWithEwallet(req.user._id, order.totalPrice);
+      processInvoice(order, req.user);
+      order.status = "Processing";
+      order.paymentStatus = "paid";
+      await order.save();
+      response.message =
+        "Order placed and paid successfully with your CFC wallet. It's being prepared!";
+      const io = req.app.get("io");
+      if (io) {
+        sendOrderNotification(io, order.toObject());
+      } else {
+        console.warn(
+          "Socket.IO instance not found, cannot send real-time order notification."
+        );
+      }
+    } catch (walletError) {
+      return next(
+        new Error(walletError.message || "Wallet payment failed.", {
+          cause: 400,
+        })
+      );
+    }
+  }
 
-   // ** PayPal Payment **
-    if (paymentType === "PayPal") {
-       const request = new paypal.orders.OrdersCreateRequest();
-       request.prefer("return=representation");
-       request.requestBody({
-           intent: "CAPTURE",
-           purchase_units: [
-               {
-                   reference_id: order.customId,
-                   amount: {
-                       currency_code: "USD",
-                       value: parseFloat(order.totalPrice).toFixed(2),
-                       breakdown: {
-                           item_total: {
-                               currency_code: "USD",
-                               value: parseFloat(order.finalPrice).toFixed(2)
-                           },
-                           tax_total: {
-                               currency_code: "USD",
-                               value: parseFloat(order.tax).toFixed(2)
-                           },
-                       }
-                   },
-               },
-           ],
-           application_context: {
-               brand_name: "Crunchy Fried Chicken",
-               user_action: "PAY_NOW",
-               return_url: `${req.protocol}://${req.headers.host}/order/paypalPayment/success?orderId=${order._id.toString()}`,
-               cancel_url: `${req.protocol}://${req.headers.host}/order/paypalPayment/cancel?orderId=${order._id.toString()}`,
-           },
-       });
+  // ** PayPal Payment **
+  if (paymentType === "PayPal") {
+    const request = new paypal.orders.OrdersCreateRequest();
+    request.prefer("return=representation");
+    request.requestBody({
+      intent: "CAPTURE",
+      purchase_units: [
+        {
+          reference_id: order.customId,
+          amount: {
+            currency_code: "USD",
+            value: parseFloat(order.totalPrice).toFixed(2),
+            breakdown: {
+              item_total: {
+                currency_code: "USD",
+                value: parseFloat(order.finalPrice).toFixed(2),
+              },
+              tax_total: {
+                currency_code: "USD",
+                value: parseFloat(order.tax).toFixed(2),
+              },
+            },
+          },
+        },
+      ],
+      application_context: {
+        brand_name: "Crunchy Fried Chicken",
+        user_action: "PAY_NOW",
+        return_url: `${req.protocol}://${
+          req.headers.host
+        }/order/paypalPayment/success?orderId=${order._id.toString()}`,
+        cancel_url: `${req.protocol}://${
+          req.headers.host
+        }/order/paypalPayment/cancel?orderId=${order._id.toString()}`,
+      },
+    });
 
-       try {
-           const paypalOrder = await paypalClient.execute(request);
-           const approveLink = paypalOrder.result.links.find(
-               (link) => link.rel === "approve"
-           )?.href;
+    try {
+      const paypalOrder = await paypalClient.execute(request);
+      const approveLink = paypalOrder.result.links.find(
+        (link) => link.rel === "approve"
+      )?.href;
 
-           if (!approveLink) {
-               return next(
-                   new Error("PayPal approval link not found", { cause: 500 })
-               );
-           }
-           order.paypalCheckoutUrl = approveLink;
-           await order.save();
-           response.paymentUrl = approveLink;
-       } catch (error) {
-           console.error("PayPal order creation failed:", error.message);
-           return next(
-               new Error("PayPal payment initialization failed", { cause: 500 })
-           );
-       }
-   }
-
+      if (!approveLink) {
+        return next(
+          new Error("PayPal approval link not found", { cause: 500 })
+        );
+      }
+      order.paypalCheckoutUrl = approveLink;
+      await order.save();
+      response.paymentUrl = approveLink;
+    } catch (error) {
+      console.error("PayPal order creation failed:", error.message);
+      return next(
+        new Error("PayPal payment initialization failed", { cause: 500 })
+      );
+    }
+  }
 
   // --- Send Final Response ---
-  res.status(paymentType === 'Wallet' ? 200 : 201).json(response);
+  res.status(paymentType === "Wallet" ? 200 : 201).json(response);
 });
+
 //====================================================================================================================//
 //cancel order
 export const CancelOrder = asyncHandler(async (req, res, next) => {

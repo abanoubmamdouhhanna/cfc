@@ -14,7 +14,7 @@ export const getCart = asyncHandler(async (req, res, next) => {
     .populate([
       {
         path: "meals.mealId",
-        select: "title finalPrice description image isCombo", // Fetch meal details + isCombo
+        select: "title finalPrice description image isCombo finalComboPrice",
       },
       {
         path: "meals.sauces.id",
@@ -38,7 +38,7 @@ export const getCart = asyncHandler(async (req, res, next) => {
     return res.status(200).json({
       status: "success",
       message: "User cart is empty",
-      result: { createdBy: userId, meals: [], cartSubtotal: 0 }, // Return empty structure
+      result: { createdBy: userId, meals: [], cartSubtotal: 0 },
     });
   }
 
@@ -47,53 +47,46 @@ export const getCart = asyncHandler(async (req, res, next) => {
   for (const mealItem of cart.meals) {
     if (!mealItem.mealId) continue;
 
-    let itemBasePrice = mealItem.mealId.finalPrice * mealItem.quantity;
+    const basePrice = mealItem.isCombo
+      ? mealItem.mealId.finalComboPrice
+      : mealItem.mealId.finalPrice;
+    let itemBasePrice = basePrice * mealItem.quantity;
     let itemExtrasPrice = 0;
 
+    const freeSaucesCount = mealItem.quantity;
+    const freeDrinksCount = mealItem.quantity;
+    const freeSidesCount = mealItem.quantity;
+
     mealItem.sauces?.forEach((sauce, index) => {
-      if (
-        sauce.id &&
-        typeof sauce.id === "object" &&
-        sauce.id.price !== undefined
-      ) {
-        if (index > 0) {
+      if (sauce.id && sauce.id.price !== undefined) {
+        if (index >= freeSaucesCount) {
           itemExtrasPrice += sauce.id.price || 0;
         }
       }
     });
 
     mealItem.drinks?.forEach((drink, index) => {
-      if (
-        drink.id &&
-        typeof drink.id === "object" &&
-        drink.id.price !== undefined
-      ) {
-        if (index > 0) {
+      if (drink.id && drink.id.price !== undefined) {
+        if (index >= freeDrinksCount) {
           itemExtrasPrice += drink.id.price || 0;
         }
       }
     });
 
     mealItem.sides?.forEach((side, index) => {
-      if (
-        side.id &&
-        typeof side.id === "object" &&
-        side.id.price !== undefined
-      ) {
-        if (index > 0) {
+      if (side.id && side.id.price !== undefined) {
+        if (index >= freeSidesCount) {
           itemExtrasPrice += side.id.price || 0;
         }
       }
     });
 
     mealItem.itemSubtotal = itemBasePrice + itemExtrasPrice;
-    cartSubtotal += mealItem.itemSubtotal; // Add to overall cart total
+    cartSubtotal += mealItem.itemSubtotal;
   }
 
-  // Add the final calculated subtotal to the cart object
   cart.cartSubtotal = parseFloat(cartSubtotal.toFixed(2));
 
-  // --- Response ---
   return res.status(200).json({
     status: "success",
     message: "User Cart",
