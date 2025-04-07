@@ -102,7 +102,6 @@ export const getCart = asyncHandler(async (req, res, next) => {
 });
 //====================================================================================================================//
 //add to cart
-
 export const addToCart = asyncHandler(async (req, res, next) => {
   const { mealId, quantity, sauces, drinks, sides, isCombo } = req.body;
 
@@ -140,14 +139,20 @@ export const addToCart = asyncHandler(async (req, res, next) => {
 
   if (cart) {
     // Cart exists, check for existing meal
-    const existingMealIndex = cart.meals.findIndex(
-      (m) =>
-        m.mealId.toString() === mealId &&
-        m.isCombo === isCombo &&
-        JSON.stringify(m.sauces) === JSON.stringify(mealDataToAdd.sauces) &&
-        JSON.stringify(m.drinks) === JSON.stringify(mealDataToAdd.drinks) &&
-        JSON.stringify(m.sides) === JSON.stringify(mealDataToAdd.sides)
-    );
+    const existingMealIndex = cart.meals.findIndex((m) => {
+      if (m.isCombo === isCombo && m.mealId.toString() === mealId) {
+        if (isCombo) {
+          return (
+            JSON.stringify(m.sauces) === JSON.stringify(mealDataToAdd.sauces) &&
+            JSON.stringify(m.drinks) === JSON.stringify(mealDataToAdd.drinks) &&
+            JSON.stringify(m.sides) === JSON.stringify(mealDataToAdd.sides)
+          );
+        } else {
+          return true; // No sauces, drinks, sides to compare if isCombo is false
+        }
+      }
+      return false;
+    });
 
     if (existingMealIndex !== -1) {
       // Meal exists, increment quantity
