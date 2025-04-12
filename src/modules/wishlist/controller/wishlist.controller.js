@@ -21,7 +21,7 @@ export const wishlist = asyncHandler(async (req, res, next) => {
   return res.status(200).json({
     status: "success",
     message: "Added to wishlist",
-    wishlist: user.wishlist,
+    data: user.wishlist,
   });
 });
 //====================================================================================================================//
@@ -66,6 +66,6 @@ export const removeFromWishlist = asyncHandler(async (req, res, next) => {
     .json({
       status: "success",
       message: "removed from wishlist",
-      wishlist: user.wishlist,
+      data: user.wishlist,
     });
 });
