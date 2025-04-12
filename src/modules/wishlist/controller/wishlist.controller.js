@@ -5,16 +5,17 @@ import { asyncHandler } from "../../../utils/errorHandling.js";
 
 export const wishlist = asyncHandler(async (req, res, next) => {
   const { mealId } = req.params;
-  if (!(await mealModel.findOne({ _id: mealId, isDeleted: false }))) {
+  const meal=await mealModel.findOne({ _id: mealId, isDeleted: false })
+  if (!meal) {
     return next(new Error("In-valid meal", { cause: 400 }));
   }
-  await userModel.updateOne(
+   await userModel.updateOne(
     { _id: req.user._id },
     { $addToSet: { wishlist: mealId } }
   );
   return res
     .status(200)
-    .json({ status: "success", message: "Added to wishlist" });
+    .json({ status: "success", message: "Added to wishlist",result:meal});
 });
 //====================================================================================================================//
 //get wishlist
@@ -41,11 +42,15 @@ export const getWishlist = asyncHandler(async (req, res, next) => {
 export const removeFromWishlist = asyncHandler(async (req, res, next) => {
   const { mealId } = req.params;
 
-  await userModel.updateOne(
+  const meal=await mealModel.findOne({ _id: mealId, isDeleted: false })
+  if (!meal) {
+    return next(new Error("In-valid meal", { cause: 400 }));
+  }
+ await userModel.updateOne(
     { _id: req.user._id },
     { $pull: { wishlist: mealId } }
   );
   return res
     .status(200)
-    .json({ status: "success", message: "removed from wishlist" });
+    .json({ status: "success", message: "removed from wishlist" ,result:meal});
 });
