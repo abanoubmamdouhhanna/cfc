@@ -53,7 +53,7 @@ export const deleteSubcategorySchema = joi
         "any.required": "Category ID is required",
         "string.empty": "Category ID cannot be empty"
       }),
-    subcategoryId: generalFeilds.id
+      subCategoryId: generalFeilds.id
       .messages({
         "any.required": "Subcategory ID is required",
         "string.empty": "Subcategory ID cannot be empty"

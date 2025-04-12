@@ -17,7 +17,7 @@ router.post(
   "/createCoupon",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  fileUpload(2, allowedTypesMap).single("couponImage"),
+  fileUpload(5, allowedTypesMap).single("couponImage"),
   isValid(createCouponSchema),
   couponController.createCoupon
 );
@@ -30,7 +30,7 @@ router.put(
   "/updateCoupon/:couponId",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  fileUpload(2, allowedTypesMap).single("couponImage"),
+  fileUpload(5, allowedTypesMap).single("couponImage"),
   isValid(updateCouponSchema),
   couponController.updateCoupon
 );

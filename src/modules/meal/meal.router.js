@@ -16,7 +16,7 @@ router.post(
   "/addMeal",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  fileUpload(2, allowedTypesMap).single("mealImage"),
+  fileUpload(5, allowedTypesMap).single("mealImage"),
   isValid(addMealSchema),
   mealController.addMeal
 );
@@ -26,7 +26,7 @@ router.patch(
   "/updateMeal/:mealId",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  fileUpload(2, allowedTypesMap).single("mealImage"),
+  fileUpload(5, allowedTypesMap).single("mealImage"),
   isValid(updateMealSchema),
   mealController.updateMeal
 );

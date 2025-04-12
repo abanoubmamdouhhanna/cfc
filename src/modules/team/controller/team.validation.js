@@ -3,7 +3,7 @@ import { generalFeilds } from "../../../middlewares/validation.middleware.js";
 
 export const headersSchema = generalFeilds.headers;
 
-export const addTeamSchema = joi
+export const updateTeamSchema = joi
   .object({
     diversity: joi.string().trim().required().messages({
       'string.empty': 'Diversity field cannot be empty',
@@ -43,36 +43,3 @@ export const addTeamSchema = joi
   })
   .required();
 
-export const updateTeamSchema = joi
-  .object({
-    teamId: generalFeilds.id,
-    diversity: joi.string().trim().messages({
-      'string.empty': 'Diversity field cannot be empty'
-    }),
-    name: joi.array().items(
-      joi.string().trim().messages({
-        'string.empty': 'Name items cannot be empty strings'
-      })
-    ).min(1).messages({
-      'array.min': 'At least one name is required'
-    }),
-    title: joi.array().items(
-      joi.string().trim().messages({
-        'string.empty': 'Title items cannot be empty strings'
-      })
-    ).min(1).messages({
-      'array.min': 'At least one title is required'
-    }),
-    file: joi.object({
-      memberImage: joi
-        .array()
-        .items(generalFeilds.file)
-        .min(1)
-        .max(20)
-        .messages({
-          'array.min': 'At least one member image is required',
-          'array.max': 'Maximum of 20 member images allowed'
-        }),
-    }),
-  })
-  .required();

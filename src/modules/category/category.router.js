@@ -19,7 +19,7 @@ router.post(
   "/addCategory",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  fileUpload(2, allowedTypesMap).single("categoryImage"),
+  fileUpload(5, allowedTypesMap).single("categoryImage"),
   isValid(createCategorySchema),
   categoryController.addCategory
 );
@@ -39,7 +39,7 @@ router.patch(
   "/updateCategory/:categoryId",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  fileUpload(2, allowedTypesMap).single("categoryImage"),
+  fileUpload(5, allowedTypesMap).single("categoryImage"),
   isValid(updateCategorySchema),
   categoryController.updateCategory
 );

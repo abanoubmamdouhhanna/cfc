@@ -15,7 +15,7 @@ router.post(
   "/apply/:hireId",
   isValid(headersSchema, true),
   auth(["user"]),
-  fileUpload(2, allowedTypesMap).single("resume"),
+  fileUpload(5, allowedTypesMap).single("resume"),
   isValid(addJobSchema),
   jobController.apply
 );

@@ -45,24 +45,9 @@ const baseCareerSchema = {
 };
 
 // Add career schema
-export const addCareerSchema = joi
+export const updateCareerSchema = joi
   .object({
     ...baseCareerSchema
   })
   .required();
 
-// Update career schema (makes fields optional)
-export const updateCareerSchema = joi
-  .object({
-    careerId: generalFeilds.id,
-    whyCFC: joi.string().trim(),
-    coreValues: joi
-      .array()
-      .items(coreValueSchema)
-      .min(1),
-    benefits: joi
-      .array()
-      .items(benefitSchema)
-      .min(1)
-  })
-  .required();

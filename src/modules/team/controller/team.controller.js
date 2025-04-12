@@ -49,38 +49,6 @@ const buildTeamArray = (
 };
 
 // ==================================================================================================================== //
-// ADD TEAM
-export const addTeam = asyncHandler(async (req, res, next) => {
-  const { diversity, title, name } = req.body;
-
-  const customId = nanoid();
-  const folderpath = `${process.env.APP_NAME}/Team/${customId}`;
-
-  // Upload Member images
-  const memberImages = await uploadmemberImages(
-    req.files?.memberImage,
-    folderpath,
-    customId
-  );
-
-  // Structure ourMember data
-  const teams = buildTeamArray(name, title, memberImages);
-
-  // Store in database
-  const Team = await teamModel.create({
-    customId,
-    diversity,
-    team: teams,
-  });
-
-  return res.status(201).json({
-    status: "success",
-    message: "Team created successfully",
-    result: Team,
-  });
-});
-
-// ==================================================================================================================== //
 // GET TEAM
 export const getTeam = asyncHandler(async (req, res, next) => {
   const Team = await teamModel.find({}).lean();
@@ -93,47 +61,51 @@ export const getTeam = asyncHandler(async (req, res, next) => {
 });
 
 // ==================================================================================================================== //
-// UPDATE TEAM
-export const updateTeam = asyncHandler(async (req, res, next) => {
+//ADD OR UPDATE TEAM
+export const upsertTeam = asyncHandler(async (req, res, next) => {
   const { diversity, title, name } = req.body;
-  const { teamId } = req.params;
 
-  // Find existing Team
-  const checkTeam = await TeamModel.findById(teamId);
-  if (!checkTeam) {
-    return next(new Error("Team not found or invalid ID", { cause: 404 }));
-  }
+  // Find existing Team document (assuming only one)
+  let checkTeam = await teamModel.findOne();
 
-  const folderpath = `${process.env.APP_NAME}/Team/${checkTeam.customId}`;
+  const isUpdate = !!checkTeam;
+  const customId = isUpdate
+    ? checkTeam.customId
+    : nanoid();
 
-  // Upload Member images
+  const folderpath = `${process.env.APP_NAME}/Team/${customId}`;
+
+  // Upload member images
   const memberImages = await uploadmemberImages(
     req.files?.memberImage,
     folderpath,
-    checkTeam.customId
+    customId
   );
 
-  // Update process array
+  // Build team array (existing or empty if new)
   const updatedTeams = buildTeamArray(
     name,
     title,
     memberImages,
-    checkTeam.team
+    checkTeam?.team || []
   );
 
-  // Update in database
-  const updatedTeam = await teamModel.findByIdAndUpdate(
-    teamId,
-    {
-      diversity,
-      team: updatedTeams,
-    },
-    { new: true }
-  );
+  const teamData = {
+    customId,
+    diversity: diversity || checkTeam?.diversity || "",
+    team: updatedTeams,
+  };
+
+  let updatedTeam;
+  if (isUpdate) {
+    updatedTeam = await teamModel.findOneAndUpdate({}, teamData, { new: true });
+  } else {
+    updatedTeam = await teamModel.create(teamData);
+  }
 
   return res.status(200).json({
     status: "success",
-    message: "Team updated successfully",
+    message: isUpdate ? "Team updated successfully" : "Team created successfully",
     result: updatedTeam,
   });
 });

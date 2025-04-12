@@ -1,33 +1,24 @@
 import Router from "express";
 import * as careerController from "./controller/career.controller.js";
 import {
-  addCareerSchema,
-  headersSchema,
+    headersSchema,
   updateCareerSchema,
 } from "./controller/career.validation.js";
 import { isValid } from "../../middlewares/validation.middleware.js";
 import { auth } from "../../middlewares/auth.middleware.js";
 const router = Router();
 
-//add career
-router.post(
-  "/addCareer",
-  isValid(headersSchema, true),
-  auth(["superAdmin"]),
-  isValid(addCareerSchema),
-  careerController.addCareer
-);
 
 //get career
 router.get("/getCareer", careerController.getCareer);
 
 //update career
 router.patch(
-  "/updateCareer/:careerId",
+  "/upsertCareer",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
   isValid(updateCareerSchema),
-  careerController.updateCareer
+  careerController.upsertCareer
 );
 
 export default router;

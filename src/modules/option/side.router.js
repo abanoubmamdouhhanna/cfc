@@ -17,7 +17,7 @@ router.post(
   "/createSideOption",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  fileUpload(2, allowedTypesMap).single("sideOptionImage"),
+  fileUpload(5, allowedTypesMap).single("sideOptionImage"),
   isValid(createSideOptionSchema),
   optionController.createSideOption
 );
@@ -27,7 +27,7 @@ router.patch(
   "/updateSideOption/:optionId ",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  fileUpload(2, allowedTypesMap).single("sideOptionImage"),
+  fileUpload(5, allowedTypesMap).single("sideOptionImage"),
   isValid(updateSideOptionSchema),
   optionController.updateSideOption
 );

@@ -1,28 +1,6 @@
 import careerModel from "../../../../DB/models/Career.model.js";
 import { asyncHandler } from "../../../utils/errorHandling.js";
 
-//add career
-export const addCareer = asyncHandler(async (req, res, next) => {
-  const { whyCFC, coreValues, benefits } = req.body;
-
-  const formattedCoreValues = coreValues.map((core) => ({
-    coreTile: core.coreTile,
-    coredescription: core.coredescription,
-  }));
-
-  const career = await careerModel.create({
-    whyCFC,
-    coreValues: formattedCoreValues,
-    benefits,
-  });
-
-  return res.status(201).json({
-    status: "success",
-    message: "Career entry created successfully",
-    result: career,
-  });
-});
-//====================================================================================================================//
 //get career
 export const getCareer = asyncHandler(async (req, res, next) => {
   const career = await careerModel.find({});
@@ -35,14 +13,10 @@ export const getCareer = asyncHandler(async (req, res, next) => {
 });
 //====================================================================================================================//
 //update career
-export const updateCareer = asyncHandler(async (req, res, next) => {
+export const upsertCareer = asyncHandler(async (req, res, next) => {
   const { whyCFC, coreValues, benefits } = req.body;
 
-  const checkCareer = await careerModel.findById(req.params.careerId);
-  if (!checkCareer) {
-    return next(new Error("In-valid career Id", { cause: 400 }));
-  }
-
+  // Prevent empty updates
   if (
     !(
       whyCFC ||
@@ -53,24 +27,36 @@ export const updateCareer = asyncHandler(async (req, res, next) => {
     return next(new Error("We need information to update", { cause: 400 }));
   }
 
+  // Format core values if provided
   const formattedCoreValues = coreValues?.map((core) => ({
     coreTile: core.coreTile,
     coredescription: core.coredescription,
   }));
 
-  const career = await careerModel.findByIdAndUpdate(
-    { _id: req.params.careerId },
-    {
-      whyCFC,
-      coreValues: formattedCoreValues,
-      benefits,
-    },
-    { new: true }
-  );
+  // Check if a career document already exists
+  let checkCareer = await careerModel.findOne();
+
+  const careerData = {
+    whyCFC: whyCFC || checkCareer?.whyCFC || "",
+    coreValues: formattedCoreValues || checkCareer?.coreValues || [],
+    benefits: benefits || checkCareer?.benefits || [],
+  };
+
+  let career;
+  if (checkCareer) {
+    // Update existing
+    career = await careerModel.findOneAndUpdate({}, careerData, { new: true });
+  } else {
+    // Create new
+    career = await careerModel.create(careerData);
+  }
 
   return res.status(201).json({
     status: "success",
-    message: "Career updated successfully",
+    message: checkCareer
+      ? "Career section updated successfully"
+      : "Career section created successfully",
     result: career,
   });
 });
+

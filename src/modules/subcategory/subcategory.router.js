@@ -20,7 +20,7 @@ router.post(
   "/createSubcategory",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  fileUpload(2, allowedTypesMap).single("subcategoryImage"),
+  fileUpload(5, allowedTypesMap).single("subcategoryImage"),
   isValid(createSubcategorySchema),
   subcategoryController.createSubcategory
 );
@@ -33,7 +33,7 @@ router.patch(
   "/updateSubcategory/:subcategoryId",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  fileUpload(2, allowedTypesMap).single("subcategoryImage"),
+  fileUpload(5, allowedTypesMap).single("subcategoryImage"),
   isValid(updateSubcategorySchema),
   subcategoryController.updateSubcategory
 );

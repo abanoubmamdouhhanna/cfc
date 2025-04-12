@@ -13,7 +13,7 @@ router.post(
   "/createDrinkOption",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  fileUpload(2, allowedTypesMap).single("drinkOptionImage"),
+  fileUpload(5, allowedTypesMap).single("drinkOptionImage"),
   isValid(createDrinkOptionSchema),
   optionController.createDrinkOption
 );
@@ -23,7 +23,7 @@ router.patch(
   "/updateDrinkOption/:optionId",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  fileUpload(2, allowedTypesMap).single("drinkOptionImage"),
+  fileUpload(5, allowedTypesMap).single("drinkOptionImage"),
   isValid(updateDrinkOptionSchema),
   optionController.updateDrinkOption
 );

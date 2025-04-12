@@ -16,7 +16,7 @@ router.post(
   "/addLocation",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  fileUpload(2, allowedTypesMap).single("locationPhoto"),
+  fileUpload(5, allowedTypesMap).single("locationPhoto"),
   isValid(adddLocationSchema),
   locationController.addLocation
 );
@@ -29,7 +29,7 @@ router.patch(
   "/updateLocation/:locationId",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  fileUpload(2, allowedTypesMap).single("locationPhoto"),
+  fileUpload(5, allowedTypesMap).single("locationPhoto"),
   isValid(updateLocationSchema),
   locationController.updateLocation
 );

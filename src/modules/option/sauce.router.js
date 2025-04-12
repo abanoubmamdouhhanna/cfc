@@ -17,7 +17,7 @@ router.post(
   "/createSauceOption",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  fileUpload(2, allowedTypesMap).single("sauceOptionImage"),
+  fileUpload(5, allowedTypesMap).single("sauceOptionImage"),
   isValid(createSauceOptionSchema),
   optionController.createSauceOption
 );
@@ -27,7 +27,7 @@ router.patch(
   "/updateSauceOption/:optionId",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  fileUpload(2, allowedTypesMap).single("sauceOptionImage"),
+  fileUpload(5, allowedTypesMap).single("sauceOptionImage"),
   isValid(updateSauceOptionSchema),
   optionController.updateSauceOption
 );

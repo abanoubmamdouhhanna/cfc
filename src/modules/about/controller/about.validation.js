@@ -2,13 +2,13 @@ import joi from "joi";
 import { generalFeilds } from "../../../middlewares/validation.middleware.js";
 
 // Consistent naming: changed from 'generalFeilds' to 'generalFields'
-const { headers, file, id } = generalFeilds;
+const { headers, file, id,optionalId } = generalFeilds;
 
 // Reusable schema components for DRY code
 const imageArraySchema = (min, max) => joi.array().items(file).min(min).max(max);
 
 // Text field validations with meaningful constraints
-const textFieldSchema = joi.string().trim().min(3).max(1000);
+const textFieldSchema = joi.string().trim().min(3).max(2000);
 const textArraySchema = joi.array().items(textFieldSchema).min(1).max(50);
 
 // Export header schema
@@ -29,8 +29,9 @@ const fileSchema = joi.object({
   })
 });
 
-// Add schema with proper validation messages
-export const addAboutSchema = joi
+
+// Update schema that makes all fields optional but validates them if provided
+export const updateAboutSchema = joi
   .object({
     welcomeText: textFieldSchema.required().messages({
       'string.empty': 'Welcome text cannot be empty',
@@ -53,24 +54,5 @@ export const addAboutSchema = joi
       'any.required': 'Fresh manifesto text is required'
     }),
     file: fileSchema.required()
-  })
-  .required();
-
-// Update schema that makes all fields optional but validates them if provided
-export const updateAboutSchema = joi
-  .object({
-    aboutId: id.required().messages({
-      'any.required': 'About ID is required for updates'
-    }),
-    welcomeText: textFieldSchema,
-    ourValues: textArraySchema,
-    missionText: textArraySchema,
-    wayOfDoingBusiness: textArraySchema,
-    freshManifestoText: textFieldSchema,
-    file: joi.object({
-      manifestoImage: imageArraySchema(1, 10),
-      welcomeImage: imageArraySchema(1, 1),
-      missionImage: imageArraySchema(1, 20)
-    })
   })
   .required();

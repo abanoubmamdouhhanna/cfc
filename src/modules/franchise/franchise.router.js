@@ -15,7 +15,7 @@ router.post(
   "/addFranchise",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  fileUpload(2, allowedTypesMap).fields([
+  fileUpload(5, allowedTypesMap).fields([
     { name: "processImage", maxCount: 20 },
   ]),
   isValid(addFranchiseSchema),
@@ -30,7 +30,7 @@ router.patch(
   "/updateFranchise/:franchiseId",
   isValid(headersSchema, true),
   auth(["superAdmin"]),
-  fileUpload(2, allowedTypesMap).fields([
+  fileUpload(5, allowedTypesMap).fields([
     { name: "processImage", maxCount: 20 },
   ]),
   isValid(updateFranchiseSchema),
