@@ -22,6 +22,7 @@ import wishlistRouter from "./modules/wishlist/wishlist.router.js";
 import sideRouter from "./modules/option/side.router.js";
 import drinkRouter from "./modules/option/drink.router.js";
 import sauceRouter from "./modules/option/sauce.router.js";
+import spmealRouter from './modules/spMeal/spMeal.router.js'
 
 const initApp = (app, express) => {
   app.use(express.json({}));
@@ -47,6 +48,8 @@ const initApp = (app, express) => {
   app.use("/side", sideRouter);
   app.use("/drink", drinkRouter);
   app.use("/sauce", sauceRouter);
+  app.use("/spmeal", spmealRouter);
+
 
   app.use("/payment", paymentRouter);
 

@@ -17,7 +17,7 @@ export const createSubcategorySchema = joi
         "any.required": "Subcategory name is required",
         "string.empty": "Subcategory name cannot be empty"
       }),
-    file: generalFeilds.file.required()
+    file: generalFeilds.file
       .messages({
         "any.required": "File is required"
       }),

@@ -14,9 +14,6 @@ export const createSubcategory = asyncHandler(async (req, res, next) => {
   if (!category) {
     return next(new Error("In-valid category id", { cause: 404 }));
   }
-  if (!req.file) {
-    return next(new Error("Subcategory image is required",{cause:404}));
-  }
   //capitalize only first letter
   const name =
     req.body.name.charAt(0).toUpperCase() +

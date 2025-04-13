@@ -5,10 +5,10 @@ export class ApiFeatures {
   }
 
   paginate() {
-    let { page = 1, size = 3 } = this.queryData;
+    let { page = 1, size = 50 } = this.queryData;
 
     page = Math.max(parseInt(page, 10) || 1, 1); // Ensure valid positive integer
-    size = Math.min(Math.max(parseInt(size, 10) || 3, 1), 10); // Limit between 1 and 10
+    size = Math.min(Math.max(parseInt(size, 10) || 50, 1), 10); // Limit between 1 and 10
 
     const skip = (page - 1) * size;
     this.mongooseQuery.limit(size).skip(skip);

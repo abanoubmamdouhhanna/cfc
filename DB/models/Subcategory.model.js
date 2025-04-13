@@ -5,7 +5,7 @@ const subcategorySchema = new Schema(
     customId: String,
     name: { type: String, unique: true, required: true },
     slug: { type: String, required: true },
-    imageURL: { type: String, required: true },
+    imageURL: { type: String},
     categoryId: { type: Types.ObjectId, ref: "Category", required: true },
     status: {
       type: String,
