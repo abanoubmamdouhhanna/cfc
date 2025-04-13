@@ -44,7 +44,6 @@ router.delete(
 router.get(
   "/getOfferMeals",
   isValid(headersSchema, true),
-  auth(["superAdmin","admin","user"]),
   mealController.getOfferMeals
 );
 

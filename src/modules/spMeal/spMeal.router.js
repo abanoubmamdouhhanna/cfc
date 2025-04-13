@@ -44,45 +44,7 @@ router.delete(
 router.get(
   "/getSpMeals",
   isValid(headersSchema, true),
-  auth(["superAdmin","admin","user"]),
   mealController.getSpMeals
-);
-
-//add offer meal
-router.post(
-  "/addOfferMeal",
-  isValid(headersSchema, true),
-  auth(["superAdmin"]),
-  fileUpload(5, allowedTypesMap).single("mealImage"),
-  isValid(addMealSchema),
-  mealController.addOfferMeal
-);
-
-//update offer meal
-router.patch(
-  "/updateOfferMeal/:mealId",
-  isValid(headersSchema, true),
-  auth(["superAdmin"]),
-  fileUpload(5, allowedTypesMap).single("mealImage"),
-  isValid(updateMealSchema),
-  mealController.updateOfferMeal
-);
-
-//delete offer meal
-router.delete(
-  "/deleteOfferMeal/:mealId",
-  isValid(headersSchema, true),
-  auth(["superAdmin"]),
-  isValid(deleteMealSchema),
-  mealController.deleteOfferMeal
-);
-
-//get sp meals
-router.get(
-  "/getOfferMeals",
-  isValid(headersSchema, true),
-  auth(["superAdmin","admin","user"]),
-  mealController.getOfferMeals
 );
 
 export default router;
