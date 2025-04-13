@@ -43,7 +43,6 @@ router.delete(
 //get sp meals
 router.get(
   "/getOfferMeals",
-  isValid(headersSchema, true),
   mealController.getOfferMeals
 );
 
