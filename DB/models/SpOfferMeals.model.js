@@ -1,6 +1,6 @@
 import mongoose, { model, Schema, Types } from "mongoose";
 
-const spMealSchema = new Schema(
+const spOfferMealSchema = new Schema(
   {
     customId: String,
     slug: { type: String, required: true },
@@ -31,16 +31,16 @@ const spMealSchema = new Schema(
   }
 );
 
-spMealSchema.pre("find", function () {
+spOfferMealSchema.pre("find", function () {
   this.where({ isDeleted: false });
 });
 
 //virtual populate to review model
-spMealSchema.virtual("reviews", {
+spOfferMealSchema.virtual("reviews", {
   ref: "Review",
   localField: "_id",
   foreignField: "mealId",
 });
 
-const spMealModel = mongoose.models.SpMeal || model("SpMeal", spMealSchema);
-export default spMealModel;
+const spOfferMealModel = mongoose.models.SpOfferMeal || model("SpOfferMeal", spOfferMealSchema);
+export default spOfferMealModel;
