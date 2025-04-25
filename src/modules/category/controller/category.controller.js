@@ -83,7 +83,7 @@ export const getCategoriesWithMeals = asyncHandler(async (req, res, next) => {
       populate: {
         path: "viewMeals",
         select:
-          "title image flavor discount finalPrice finalComboPrice size wishUser status",
+         "title image discount description finalPrice finalComboPrice wishUser status",
       },
     });
 
