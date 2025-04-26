@@ -40,8 +40,6 @@ router.get(
 // Get all drink options
 router.get(
   "/getAllDrinkOptions",
-  isValid(headersSchema, true),
-  auth(["superAdmin", "user"]),
   optionController.getAllDrinkOptions
 );
 

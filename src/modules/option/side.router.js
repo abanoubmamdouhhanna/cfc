@@ -44,8 +44,6 @@ router.get(
 // Get all side options
 router.get(
   "/getAllsideOptions",
-  isValid(headersSchema, true),
-  auth(["superAdmin", "user"]),
   optionController.getAllSideOptions
 );
 

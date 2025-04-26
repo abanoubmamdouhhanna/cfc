@@ -44,8 +44,6 @@ router.get(
 // Get all sauce options
 router.get(
   "/getAllSauceOptions",
-  isValid(headersSchema, true),
-  auth(["superAdmin", "user"]),
   optionController.getAllSauceOptions
 );
 
