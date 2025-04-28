@@ -366,7 +366,7 @@ export const createOrder = asyncHandler(async (req, res, next) => {
         if (s.price > 0) itemTotalCents += Math.round(s.price * 100);
       });
       mealItem.drinks.forEach((d) => {
-        if (d.price > 0) itemTotalCents += Math.round(s.price * 100);
+        if (s.price > 0) itemTotalCents += Math.round(s.price * 100);
       });
       mealItem.sides.forEach((s) => {
         if (s.price > 0) itemTotalCents += Math.round(s.price * 100);
