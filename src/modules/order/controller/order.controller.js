@@ -898,7 +898,7 @@ export const paypalCancel = asyncHandler(async (req, res, next) => {
 const stripe = new Stripe(process.env.STRIPE_KEY);
 
 export const stripeSuccess = asyncHandler(async (req, res, next) => {
-  const { orderId, session_id } = req.query;
+  const { orderId, session_id } = req.params;
 
   if (!orderId || !session_id) {
     return next(new Error("Missing orderId or session_id", { cause: 400 }));
