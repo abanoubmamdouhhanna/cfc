@@ -415,7 +415,7 @@ export const createOrder = asyncHandler(async (req, res, next) => {
 
 
 
-        success_url:`https://cfc-helmy.vercel.app//order/success`,
+        success_url:`https://cfc-helmy.vercel.app/order/success`,
         cancel_url: `https://cfc-helmy.vercel.app/order/success`,
 
 
