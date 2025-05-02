@@ -87,7 +87,7 @@ router.get(
 
 //Strip Payment Success
 router.get(
-  "/success/:orderId/:session_id",
+  "/stripePayment/success",
   isValid(headersSchema, true),
   auth(["user", "superAdmin"]),
   orderController.stripeSuccess
