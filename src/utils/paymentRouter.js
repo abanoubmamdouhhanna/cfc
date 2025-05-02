@@ -89,6 +89,7 @@ paymentRouter.post(
           const order = await orderModel.findById(orderId);
           if (order && order.status === "Pending") {
             order.status = "Processing"; // or 'Paid'
+            order.paymentStatus="paid"
             order.paymentSessionId = session.id;
             order.paidAt = new Date();
             await order.save();
