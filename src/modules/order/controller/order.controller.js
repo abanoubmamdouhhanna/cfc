@@ -408,9 +408,18 @@ export const createOrder = asyncHandler(async (req, res, next) => {
         cancel_url: `${req.protocol}://${
           req.headers.host
         }/order/stripePayment/cancel?orderId=${order._id.toString()}`,
-        success_url: `${req.protocol}://${
-          req.headers.host
-        }/order/stripePayment/success?orderId=${order._id.toString()}&session_id={CHECKOUT_SESSION_ID}`,
+        // success_url: `${req.protocol}://${
+        //   req.headers.host
+        // }/order/stripePayment/success?orderId=${order._id.toString()}&session_id={CHECKOUT_SESSION_ID}`,
+
+
+
+
+        // success_url: `${frontendURL}/order/stripePayment/success?orderId=${order._id.toString()}&session_id=${CHECKOUT_SESSION_ID}`,
+        success_url: `https://cfc-helmy.vercel.app/order/success/${order._id.toString()}/{CHECKOUT_SESSION_ID}`,
+
+
+
         customer_email: req.user.email,
         metadata: { orderId: order._id.toString() },
         line_items: line_items,
