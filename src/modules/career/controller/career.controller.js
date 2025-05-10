@@ -3,7 +3,7 @@ import { asyncHandler } from "../../../utils/errorHandling.js";
 
 //get career
 export const getCareer = asyncHandler(async (req, res, next) => {
-  const career = await careerModel.find({});
+  const career = await careerModel.findOne({});
 
   return res.status(200).json({
     status: "success",
