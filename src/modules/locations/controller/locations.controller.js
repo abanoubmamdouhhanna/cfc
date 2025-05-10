@@ -45,6 +45,17 @@ export const getLoacation = asyncHandler(async (req, res, next) => {
   });
 });
 //====================================================================================================================//
+//get location by id
+export const getLocationById = asyncHandler(async (req, res, next) => {
+  const { locationId } = req.params;
+  const location = await locationModel.findById(locationId);
+  return res.status(200).json({
+    status: "success",
+    message: "Done",
+    result: location,
+  });
+});
+//====================================================================================================================//
 //update location
 export const updateLocation = asyncHandler(async (req, res, next) => {
   const { title, address, phone, hours, locationURL, taxRate } = req.body;

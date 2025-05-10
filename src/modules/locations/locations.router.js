@@ -24,6 +24,9 @@ router.post(
 //get locations
 router.get("/getLoacation", locationController.getLoacation);
 
+//get location by id
+router.get("/getLocationById/:locationId", locationController.getLocationById);
+
 //update location
 router.patch(
   "/updateLocation/:locationId",
