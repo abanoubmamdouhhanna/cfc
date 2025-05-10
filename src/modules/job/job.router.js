@@ -24,7 +24,7 @@ router.post(
 router.get(
   "/getJobs",
   isValid(headersSchema, true),
-  auth(["superAdmin"]),
+  auth(["superAdmin","admin","user"]),
   jobController.getJobs
 );
 

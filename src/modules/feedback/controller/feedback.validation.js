@@ -10,9 +10,6 @@ const FEEDBACK_TYPES = [
   "Customer Service",
   "Food Quality",
   "General Feedback",
-  "Online Orders",
-  "Vendor Inquiries",
-  "Donations & Sponsorship Inquiries",
 ];
 
 export const addFeedbackSchema = joi
