@@ -27,8 +27,6 @@ import sideOptionModel from "../../../../DB/models/Side.model.js";
 // Create Order
 export const createOrder = asyncHandler(async (req, res, next) => {
   const {
-    address,
-    city,
     state,
     phone,
     couponName,
@@ -286,8 +284,6 @@ export const createOrder = asyncHandler(async (req, res, next) => {
   const order = await orderModel.create({
     locationId,
     userId: req.user._id,
-    address,
-    city,
     state,
     phone,
     meals: finalMealList,

@@ -67,14 +67,14 @@ export const createOrderSchema = joi
     couponName: joi.string().trim().uppercase().optional(), // couponName is usually optional
 
     // Address information
-    address: joi.string().trim().required().messages({
-      "string.empty": "Address cannot be empty",
-      "any.required": "Address is required",
-    }),
-    city: joi.string().trim().required().messages({
-      "string.empty": "City cannot be empty",
-      "any.required": "City is required",
-    }),
+    // address: joi.string().trim().required().messages({
+    //   "string.empty": "Address cannot be empty",
+    //   "any.required": "Address is required",
+    // }),
+    // city: joi.string().trim().required().messages({
+    //   "string.empty": "City cannot be empty",
+    //   "any.required": "City is required",
+    // }),
     state: joi.string().trim().required().messages({
       "string.empty": "State cannot be empty",
       "any.required": "State is required",
