@@ -475,7 +475,8 @@ export const createOrder = asyncHandler(async (req, res, next) => {
       intent: "CAPTURE",
       purchase_units: [
         {
-          reference_id: order.customId,
+          reference_id: order._id.toString(),
+          custom_id: order._id.toString(),
           amount: {
             currency_code: "USD",
             value: parseFloat(order.totalPrice).toFixed(2),
@@ -495,12 +496,12 @@ export const createOrder = asyncHandler(async (req, res, next) => {
       application_context: {
         brand_name: "Crunchy Fried Chicken",
         user_action: "PAY_NOW",
-        return_url: `${req.protocol}://${
-          req.headers.host
-        }/order/paypalPayment/success?orderId=${order._id.toString()}`,
-        cancel_url: `${req.protocol}://${
-          req.headers.host
-        }/order/paypalPayment/cancel?orderId=${order._id.toString()}`,
+        // return_url: `${req.protocol}://${
+        //   req.headers.host
+        // }/order/paypalPayment/success?orderId=${order._id.toString()}`,
+        // cancel_url: `${req.protocol}://${
+        //   req.headers.host
+        // }/order/paypalPayment/cancel?orderId=${order._id.toString()}`,
       },
     });
 

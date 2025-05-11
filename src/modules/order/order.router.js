@@ -8,6 +8,7 @@ import {
   deliveredOrderSchema,
   headersSchema,
 } from "./controller/order.validation.js";
+import { paypalWebhook } from "../../utils/paypalwebhook.js";
 
 
 const router = Router();
@@ -99,6 +100,12 @@ router.get(
   isValid(headersSchema, true),
   auth(["user", "superAdmin"]),
   orderController.stripeCancel
+);
+
+//PayPal Webhook
+router.post(
+  "/paypal/webhook",
+  paypalWebhook
 );
 
 export default router;
