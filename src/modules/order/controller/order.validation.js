@@ -65,17 +65,7 @@ export const createOrderSchema = joi
   .object({
     locationId: generalFeilds.id.required(), // locationId should be required in path params, maybe not body? Adjust if needed.
     couponName: joi.string().trim().uppercase().optional(), // couponName is usually optional
-
-    // Address information
-    // address: joi.string().trim().required().messages({
-    //   "string.empty": "Address cannot be empty",
-    //   "any.required": "Address is required",
-    // }),
-    // city: joi.string().trim().required().messages({
-    //   "string.empty": "City cannot be empty",
-    //   "any.required": "City is required",
-    // }),
-    state: joi.string().trim().required().messages({
+   state: joi.string().trim().required().messages({
       "string.empty": "State cannot be empty",
       "any.required": "State is required",
     }),
