@@ -8,6 +8,7 @@ import {
   verifyToken,
 } from "../../../utils/generateAndVerifyToken.js";
 import { redeemPoints } from "../../../utils/wallet rewards.js";
+import walletModel from "../../../../DB/models/Wallet.model.js";
 
 //user profile
 export const userProfile = asyncHandler(async (req, res, next) => {
@@ -196,3 +197,16 @@ export const handleRedeemPoints=asyncHandler(async(req,res,next)=>
   });
 
 })
+//====================================================================================================================//
+//get wallet balance
+export const getWalletBalance=asyncHandler(async(req,res,next)=>
+{
+  const userId=req.user._id
+  const wallet=await walletModel.findOne({userId})  
+  return res.status(200).json({
+    status: "success",
+    message: "Wallet balance successfully",
+    result: wallet,
+  });
+})
+//====================================================================================================================//

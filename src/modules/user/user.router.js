@@ -63,4 +63,12 @@ router.post(
   userController.handleRedeemPoints
 );
 
+//get wallet balance
+router.get(
+  "/getWalletBalance",
+  isValid(headersSchema, true),
+  auth(["superAdmin", "user"]),
+  userController.getWalletBalance
+);
+
 export default router;
