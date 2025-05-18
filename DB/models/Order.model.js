@@ -63,7 +63,7 @@ const orderSchema = new Schema(
     invoicePublicId: String,
     stripeSessionurl: String,
     paypalCheckoutUrl: String,
-
+    paidAt: Date,
     updatedBy: { type: Types.ObjectId, ref: "User" },
     isDeleted: { type: Boolean, default: false },
   },

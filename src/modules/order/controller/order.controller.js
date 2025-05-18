@@ -401,21 +401,9 @@ export const createOrder = asyncHandler(async (req, res, next) => {
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         mode: "payment",
-        // cancel_url: `${req.protocol}://${
-        //   req.headers.host
-        // }/order/stripePayment/cancel?orderId=${order._id.toString()}`,
-        // success_url: `${req.protocol}://${
-        //   req.headers.host
-        // }/order/stripePayment/success?orderId=${order._id.toString()}&session_id={CHECKOUT_SESSION_ID}`,
-
-
        success_url:`https://cfc-helmy.vercel.app/order/success`,
-        cancel_url: `https://cfc-helmy.vercel.app/order/success`,
-
-
-
+       cancel_url: `https://cfc-helmy.vercel.app/order/success`,
         customer_email: req.user.email,
-        // metadata: { orderId: order._id.toString() },
         metadata: {
           orderId: order._id.toString(),
           userId: req.user._id.toString(), // Optional: could help debugging
