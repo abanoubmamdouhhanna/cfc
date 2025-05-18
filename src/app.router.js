@@ -26,6 +26,8 @@ import spmealRouter from './modules/spMeal/spMeal.router.js'
 import offerMealRouter from './modules/spMeal/offerMeal.router.js'
 
 const initApp = (app, express) => {
+  app.use("/payment", paymentRouter);
+
   app.use(express.json({}));
   app.use(cookieParser());
 
@@ -53,7 +55,6 @@ const initApp = (app, express) => {
   app.use("/offerMeal", offerMealRouter);
 
 
-  app.use("/payment", paymentRouter);
 
   app.all("*", (req, res, next) => {
     return next(new Error("error 404 in-valid routing", { cause: 404 }));
