@@ -144,7 +144,7 @@ paymentRouter.post(
   express.raw({ type: "application/json" }),
   async (req, res) => {
     const sig = req.headers["stripe-signature"];
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const webhookSecret = "we_1RQFcwGRzkkxILR49LrdFdDw"
 
     if (!webhookSecret) {
       console.error("❌ Missing Stripe webhook secret.");
