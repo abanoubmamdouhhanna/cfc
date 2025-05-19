@@ -61,7 +61,7 @@ paymentRouter.post(
             return res.status(404).send("Order not found.");
           }
           if (order._id) {
-            rewardCustomer(req.user._id, order._id, order.totalPrice);
+            rewardCustomer(order.userId, order._id, order.totalPrice);
           }
 
           if (
