@@ -1,6 +1,9 @@
 import express from "express";
 import Stripe from "stripe";
 import orderModel from "../../DB/models/Order.model.js";
+import { processInvoice } from "./invoiceService.js";
+import { rewardCustomer } from "./wallet rewards.js";
+import { sendOrderNotification } from "./orderNotification.js";
 
 const paymentRouter = express.Router();
 const stripe = new Stripe(process.env.STRIPE_KEY);
@@ -51,22 +54,35 @@ paymentRouter.post(
           }
 
           const order = await orderModel.findById(orderId);
+          processInvoice(order, req.user);
 
           if (!order) {
             console.error(`❌ Order not found: ${orderId}`);
             return res.status(404).send("Order not found.");
           }
+          if (order._id) {
+            rewardCustomer(req.user._id, order._id, order.totalPrice);
+          }
 
-          if (event.type === "checkout.session.completed" && order.status === OrderStatus.PENDING) {
+          if (
+            event.type === "checkout.session.completed" &&
+            order.status === OrderStatus.PENDING
+          ) {
             order.status = OrderStatus.PROCESSING;
             order.paymentStatus = OrderStatus.PAID;
-            order.paymentSessionId = session.id;
+            order.stripeSessionUrl = null;
             order.paidAt = new Date();
             await order.save();
             console.log(`✅ Order ${orderId} marked as Processing.`);
           }
+          const io = req.app.get("io");
+          if (!io) throw new Error("Socket.IO instance not found");
+          sendOrderNotification(io, order);
 
-          if (event.type === "checkout.session.expired" && order.status === OrderStatus.PENDING) {
+          if (
+            event.type === "checkout.session.expired" &&
+            order.status === OrderStatus.PENDING
+          ) {
             order.status = OrderStatus.CANCELLED;
             await order.save();
             console.log(`❌ Order ${orderId} expired and marked as Cancelled.`);
@@ -76,7 +92,7 @@ paymentRouter.post(
         }
 
         default:
-          console.log(`ℹ️ Unhandled event type: ${event.type}`);
+          console.log(`Unhandled event type: ${event.type}`);
       }
 
       // Respond to Stripe to confirm receipt

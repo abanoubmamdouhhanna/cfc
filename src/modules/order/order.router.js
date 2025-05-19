@@ -86,22 +86,6 @@ router.get(
   orderController.paypalCancel
 );
 
-//Strip Payment Success
-router.get(
-  "/stripePayment/success",
-  isValid(headersSchema, true),
-  auth(["user", "superAdmin"]),
-  orderController.stripeSuccess
-);
-
-//Strip Payment Cancel 
-router.get(
-  "/stripePayment/cancel",
-  isValid(headersSchema, true),
-  auth(["user", "superAdmin"]),
-  orderController.stripeCancel
-);
-
 //PayPal Webhook
 router.post(
   "/paypal/webhook",
