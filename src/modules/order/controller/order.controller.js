@@ -688,7 +688,7 @@ export const getUserOrders = asyncHandler(async (req, res, next) => {
     return next(new Error(`please login first`, { cause: 404 }));
   }
   const apiObject = new ApiFeatures(
-    orderModel.find({ userId: req.user._id }),
+    orderModel.find({ userId: req.user._id, status: { $ne: "Pending" } }),
     req.query
   )
     .paginate()
@@ -703,7 +703,34 @@ export const getUserOrders = asyncHandler(async (req, res, next) => {
     result: orders,
   });
 });
+//====================================================================================================================//
+//get pending order
+export const getPendingOrders = asyncHandler(async (req, res, next) => {
+  const userId = req.user?._id;
 
+  // 1. Fetch pending, not deleted orders, sorted by latest
+  const orders = await orderModel
+    .find({
+      userId,
+      status: "Pending",
+    })
+    .sort({ createdAt: -1 })
+    .populate("locationId", "name address") // populate location info
+    .populate("meals.mealId", "title description") // populate meal basic info
+    .populate("meals.sauces.sauceId", "name price") // populate sauces
+    .populate("meals.drinks.drinkId", "name price") // populate drinks
+    .populate("meals.sides.sideId", "name price")   // populate sides
+    .populate("couponId", "code discount") // optional: populate coupon used
+    .populate("updatedBy", "name email");  // optional: who last updated the order
+
+  // 2. Return response
+  return res.status(200).json({
+    status: "success",
+    message: `Fetched ${orders.length} pending order(s).`,
+    count: orders.length,
+    result: orders,
+  });
+});
 //====================================================================================================================//
 //get location logged in orders
 

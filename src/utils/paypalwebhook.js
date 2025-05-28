@@ -120,3 +120,4 @@ async function handlePaymentCompleted(req, res, next, resource) {
     session.endSession();
   }
 }
+

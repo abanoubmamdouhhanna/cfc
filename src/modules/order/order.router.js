@@ -10,7 +10,6 @@ import {
 } from "./controller/order.validation.js";
 import { paypalWebhook } from "../../utils/paypalwebhook.js";
 
-
 const router = Router();
 
 //create Order
@@ -47,21 +46,27 @@ router.get(
   auth(["superAdmin"]),
   orderController.getAllOrders
 );
-//get order 
+//get order
 router.get(
   "/getOrder/:orderId",
   isValid(headersSchema, true),
-  auth(["superAdmin","admin","user"]),
+  auth(["superAdmin", "admin", "user"]),
   orderController.getOrder
 );
 //get order history for user
 router.get(
   "/getUserOrders",
   isValid(headersSchema, true),
-  auth(["superAdmin","user"]),
+  auth(["superAdmin", "user"]),
   orderController.getUserOrders
 );
-
+//pending order
+router.get(
+  "/getPendingOrders",
+  isValid(headersSchema, true),
+  auth(["user", "superAdmin"]),
+  orderController.getPendingOrders
+);
 //get location logged in orders
 router.get(
   "/getLocationOrders",
@@ -87,9 +92,7 @@ router.get(
 );
 
 //PayPal Webhook
-router.post(
-  "/paypal/webhook",
-  paypalWebhook
-);
+router.post("/paypal/webhook", paypalWebhook);
+
 
 export default router;
