@@ -46,5 +46,4 @@ router.get(
   "/getAllSauceOptions",
   optionController.getAllSauceOptions
 );
-
 export default router;

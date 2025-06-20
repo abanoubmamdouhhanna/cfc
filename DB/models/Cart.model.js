@@ -31,6 +31,16 @@ const cartSchema = new Schema(
   {
     createdBy: { type: Types.ObjectId, ref: "User", required: true },
     meals: [cartMealSchema],
+
+    extras: [
+      {
+        type: { type: String, enum: ["sauce", "drink", "side"], required: true },
+        id: { type: Types.ObjectId, required: true },
+        quantity: { type: Number, default: 1 },
+        _id: false
+      }
+    ],
+
     isDeleted: { type: Boolean, default: false },
   },
   {
@@ -41,6 +51,29 @@ const cartSchema = new Schema(
 cartSchema.pre("find", function () {
   this.where({ isDeleted: false });
 });
+
+// In your cart schema
+cartSchema.virtual('sauceExtras', {
+  ref: 'SauceOption',
+  localField: 'extras.id',
+  foreignField: '_id',
+  match: { 'extras.type': 'sauce' } // works only if structure matches
+});
+
+cartSchema.virtual('drinkExtras', {
+  ref: 'DrinkOption',
+  localField: 'extras.id',
+  foreignField: '_id',
+  match: { 'extras.type': 'drink' }
+});
+
+cartSchema.virtual('sideExtras', {
+  ref: 'SideOption',
+  localField: 'extras.id',
+  foreignField: '_id',
+  match: { 'extras.type': 'side' }
+});
+
 
 const cartModel = mongoose.models.Cart || model("Cart", cartSchema);
 export default cartModel;

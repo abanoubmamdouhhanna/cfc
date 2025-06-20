@@ -176,7 +176,6 @@ export const getAllDrinkOptions = asyncHandler(async (req, res, next) => {
     result: options,
   });
 });
-
 // ================== SAUCE ==================
 export const createSauceOption = asyncHandler(async (req, res, next) => {
   const { name, price } = req.body;
@@ -248,5 +247,34 @@ export const getAllSauceOptions = asyncHandler(async (req, res, next) => {
     status: "success",
     message: "Sauce options retrieved",
     result: options,
+  });
+});
+//====================================================================================================================//
+
+export const getFreeComboOptions = asyncHandler(async (req, res, next) => {
+  // Fetch all 3 in parallel
+  const [sides, drinks, sauces] = await Promise.all([
+    sideOptionModel.find(
+      { isAvailable: true, isFreeWithCombo: true },
+      "name image price"
+    ),
+    drinkOptionModel.find(
+      { isAvailable: true, isFreeWithCombo: true },
+      "name image price"
+    ),
+    sauceOptionModel.find(
+      { isAvailable: true, isFreeWithCombo: true },
+      "name image price"
+    ),
+  ]);
+
+  res.status(200).json({
+    status: "success",
+    message: "Free combo options retrieved",
+    result: {
+      sides,
+      drinks,
+      sauces,
+    },
   });
 });

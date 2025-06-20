@@ -41,10 +41,10 @@ router.get(
   optionController.getSideOption
 );
 
-// Get all side options
+// Get free combo options
 router.get(
-  "/getAllsideOptions",
-  optionController.getAllSideOptions
+  "/getFreeComboOptions",
+  optionController.getFreeComboOptions
 );
 
 export default router;

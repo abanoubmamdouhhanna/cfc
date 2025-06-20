@@ -8,6 +8,7 @@ const sideOptionSchema = new Schema(
     mainsideOptionImagePublicId: { type: String },
     price: { type: Number, default: 0 },
     isAvailable: { type: Boolean, default: true },
+    isFreeWithCombo: { type: Boolean, default: false }, 
     createdBy: { type: Types.ObjectId, ref: "User", required: true },
     updatedBy: { type: Types.ObjectId, ref: "User" },
 

@@ -9,12 +9,13 @@ import { asyncHandler } from "../../../utils/errorHandling.js";
 export const getCart = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
 
+  // 1️⃣ Fetch cart with meals & meal additions populated
   const cart = await cartModel
     .findOne({ createdBy: userId })
     .populate([
       {
         path: "meals.mealId",
-        select: "title finalPrice description image isCombo finalComboPrice",
+        select: "title finalPrice finalComboPrice description image isCombo",
       },
       {
         path: "meals.sauces.id",
@@ -34,23 +35,30 @@ export const getCart = asyncHandler(async (req, res, next) => {
     ])
     .lean();
 
-  if (!cart || !cart.meals || cart.meals.length === 0) {
+  if (!cart || (!cart.meals?.length && !cart.extras?.length)) {
     return res.status(200).json({
       status: "success",
       message: "User cart is empty",
-      result: { createdBy: userId, meals: [], cartSubtotal: 0 },
+      result: {
+        createdBy: userId,
+        meals: [],
+        extras: [],
+        cartSubtotal: 0,
+      },
     });
   }
 
   let cartSubtotal = 0;
 
+  // 2️⃣ Calculate meals subtotal
   for (const mealItem of cart.meals) {
     if (!mealItem.mealId) continue;
 
     const basePrice = mealItem.isCombo
       ? mealItem.mealId.finalComboPrice
       : mealItem.mealId.finalPrice;
-    let itemBasePrice = basePrice * mealItem.quantity;
+
+    const itemBasePrice = basePrice * mealItem.quantity;
     let itemExtrasPrice = 0;
 
     const freeSaucesCount = mealItem.quantity;
@@ -81,8 +89,42 @@ export const getCart = asyncHandler(async (req, res, next) => {
       }
     });
 
-    mealItem.itemSubtotal = itemBasePrice + itemExtrasPrice;
+    mealItem.itemSubtotal = parseFloat(
+      (itemBasePrice + itemExtrasPrice).toFixed(2)
+    );
     cartSubtotal += mealItem.itemSubtotal;
+  }
+
+  // 3️⃣ Manually populate standalone extras & calculate subtotal
+  if (cart.extras?.length) {
+    for (const extra of cart.extras) {
+      let optionDetails = null;
+
+      if (extra.type === "sauce") {
+        optionDetails = await sauceOptionModel
+          .findById(extra.id)
+          .select("name price");
+      } else if (extra.type === "drink") {
+        optionDetails = await drinkOptionModel
+          .findById(extra.id)
+          .select("name price");
+      } else if (extra.type === "side") {
+        optionDetails = await sideOptionModel
+          .findById(extra.id)
+          .select("name price");
+      }
+
+      if (optionDetails) {
+        extra.details = optionDetails; // attach populated info
+        const extraSubtotal = (optionDetails.price || 0) * extra.quantity;
+        extra.itemSubtotal = parseFloat(extraSubtotal.toFixed(2));
+        cartSubtotal += extra.itemSubtotal;
+      } else {
+        // If invalid ID (edge case), mark as $0
+        extra.details = { name: "Unavailable", price: 0 };
+        extra.itemSubtotal = 0;
+      }
+    }
   }
 
   cart.cartSubtotal = parseFloat(cartSubtotal.toFixed(2));
@@ -177,20 +219,74 @@ export const addToCart = asyncHandler(async (req, res, next) => {
   });
 });
 //====================================================================================================================//
+//add Standalone Extra
+export const addStandaloneExtra = asyncHandler(async (req, res, next) => {
+  const { type, id, quantity } = req.body;
+
+  if (!["sauce", "drink", "side"].includes(type)) {
+    return next(new Error("Invalid type, must be sauce, drink, or side", { cause: 400 }));
+  }
+
+  // Validate existence
+  let option;
+  if (type === "sauce") {
+    option = await sauceOptionModel.findById(id);
+  } else if (type === "drink") {
+    option = await drinkOptionModel.findById(id);
+  } else if (type === "side") {
+    option = await sideOptionModel.findById(id);
+  }
+
+  if (!option || !option.isAvailable) {
+    return next(new Error(`This ${type} is not available`, { cause: 400 }));
+  }
+
+  // Find or create cart
+  let cart = await cartModel.findOne({ createdBy: req.user._id });
+  if (!cart) {
+    cart = await cartModel.create({
+      createdBy: req.user._id,
+      extras: [{ type, id, quantity: quantity || 1 }],
+    });
+  } else {
+    // Check if already in extras
+    const existingIndex = cart.extras.findIndex(
+      (e) => e.type === type && e.id.toString() === id
+    );
+
+    if (existingIndex !== -1) {
+      cart.extras[existingIndex].quantity += quantity || 1;
+    } else {
+      cart.extras.push({ type, id, quantity: quantity || 1 });
+    }
+
+    await cart.save();
+  }
+
+  // Optional: populate for response
+  return res.status(201).json({
+    status: "success",
+    message: `${type} added to cart successfully`,
+    result: cart,
+  });
+});
+//====================================================================================================================//
 //clear cart
 
 export async function clearAllCartItems(createdBy) {
-  const cart = await cartModel.updateOne({ createdBy }, { meals: [] });
-  return cart;
+  return await cartModel.updateOne(
+    { createdBy },
+    { meals: [], extras: [] }
+  );
 }
 export const clearCart = asyncHandler(async (req, res, next) => {
   await clearAllCartItems(req.user._id);
+
   return res.status(200).json({
     status: "success",
     message: "Cart cleared successfully",
   });
 });
-
 //====================================================================================================================//
 //clear Cart Item
 export async function clearSelectedItems(mealIds, createdBy) {

@@ -26,6 +26,15 @@ router.post(
   cartController.addToCart
 );
 
+//add Standalone Extra
+router.post(
+  "/addStandaloneExtra",
+  isValid(headersSchema, true),
+  auth(["superAdmin", "admin", "user"]),
+  // isValid(addStandaloneExtraSchema),
+  cartController.addStandaloneExtra
+);
+
 //clear cart
 router.patch(
   "/clearCart",
