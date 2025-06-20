@@ -209,7 +209,7 @@ export const addToCart = asyncHandler(async (req, res, next) => {
   // Populate meals after updating
   const populatedCart = await cartModel.findById(cart._id).populate({
     path: "meals.mealId",
-    select: "title finalPrice description image isCombo",
+    select: "title finalPrice finalComboPrice description image isCombo",
   });
 
   return res.status(201).json({
